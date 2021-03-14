@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+
+		<style>
+			video {
+				max-width: 400px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div><button class="debugger">Debugger button</button></div>
+		<div><button class="interaction">Interaction button</button></div>
+
+		<video src="./sample.mp4" controls></video>
+		<canvas></canvas>
+		<span></span>
+
+		<script type="module">
+import Synchronizer from "./Synchronizer.js";
+
+document.querySelector(".debugger").addEventListener("click", () => {
+	debugger;
+});
+
+const video = document.querySelector("video");
+const canvas = document.querySelector("canvas");
+const span = document.querySelector("span");
+
+(async () => {
+	const lookaheadMargin = 0.5;
+	const lookbehindMargin = 0.5;
+
+	const videoLookahead = document.createElement("video");
+	videoLookahead.src = video.src;
+	videoLookahead.preload = true;
+	videoLookahead.controls = true;
+
+	video.insertAdjacentElement("afterend", videoLookahead);
+
+
+	const synchronizer = new Synchronizer(video, videoLookahead, lookaheadMargin);
+
+
+	//#region AudioContext
+
+	const createAnalyserAudioContext = (video, sampleRate=3000, fftSize=2048) => {
+		const audioContext = new AudioContext({sampleRate});
+
+		const audioSrc = new MediaElementAudioSourceNode(audioContext, {mediaElement: video});
+
+		const analyser = new AnalyserNode(audioContext, {fftSize});
+
+		audioSrc.connect(analyser);
+
+		return {
+			audioContext,
+			analyser,
+		};
+	};
+
+	const {audioContext, analyser} = createAnalyserAudioContext(videoLookahead);
+	const analyserBuffer = new Float32Array(analyser.fftSize);
+
+ 	//#region MinMaxer worklet
+
+	class MinMaxerNode extends AudioWorkletNode {
+		constructor(audioContext, {historyDuration=0}={}) {
+			super(audioContext, "min-maxer", {
+				processorOptions: {
+					sampleRate: audioContext.sampleRate,
+					historyDuration,
+				},
+			});
+		}
+
+		static registerWorkletModule(audioContext) {
+			return audioContext.audioWorklet.addModule("MinMaxer-audio-worklet.js");
+		}
+	}
+
+	await MinMaxerNode.registerWorkletModule(audioContext);
+
+	const minMaxer = new MinMaxerNode(audioContext, {
+		historyDuration: lookaheadMargin + lookbehindMargin,
+	});
+	minMaxer.port.onmessage = event => {
+		console.timeEnd("minMaxer");
+		console.log(event.data);
+	};
+
+/* 	setInterval(() => {
+		console.time("minMaxer");
+		minMaxer.port.postMessage({
+			currentTime: video.currentTime,
+			paused: video.paused,
+		});
+	}, 2000); */
+	//#endregion
+
+	analyser.connect(minMaxer);//.connect(audioContext.destination);
+	//#endregion
+
+	canvas.width = analyserBuffer.length;
+	canvas.height = 120;
+	const canvasContext = canvas.getContext("2d");
+	canvasContext.scale(1, -canvas.height / 2);
+	canvasContext.translate(0, -1);
+	canvasContext.fillStyle = "#aaa";
+
+
+	//#region Loop
+
+	const maxDiffDbFromExtrema = (sampleMin, sampleMax) => {
+		const maxDiffAmplitude = (sampleMax - sampleMin) / 2 / video.volume;
+		const maxDiffDb = 20 * Math.log10(maxDiffAmplitude);
+		return maxDiffDb;
+	};
+
+	const maxDiffDbFromAnalyser = () => {
+		analyser.getFloatTimeDomainData(analyserBuffer);
+
+		return maxDiffDbFromExtrema(Math.min(...analyserBuffer), Math.max(...analyserBuffer));
+	};
+
+	const maxDiffDbFromMinMaxer = () => new Promise(resolve => {
+		minMaxer.port.onmessage = event => {
+			const {sampleMin, sampleMax} = event.data;
+
+			console.timeEnd("minMaxer");
+
+			resolve(maxDiffDbFromExtrema(sampleMin, sampleMax));
+		};
+
+		console.time("minMaxer");
+		minMaxer.port.postMessage({
+			currentTime: video.currentTime,
+			paused: video.paused,
+		});
+	});
+
+	let animationFrameHandle;
+
+	let prev;
+
+	const draw = async now => {
+		if (!isNaN(prev)) {
+			console.log(now - prev);
+		}
+
+		prev = now;
+
+		const maxDiffDb = await maxDiffDbFromMinMaxer();
+
+		span.textContent = maxDiffDb;
+
+		let newPlaybackRate;
+		if (maxDiffDb < -12) {
+			newPlaybackRate = 8;
+		} else {
+			newPlaybackRate = .5;
+		}
+
+		if (video.playbackRate !== newPlaybackRate) {
+			video.playbackRate = newPlaybackRate;
+		}
+
+		canvasContext.save();
+		canvasContext.resetTransform();
+		canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+		canvasContext.restore();
+
+		analyserBuffer.forEach((x, i) => {
+			canvasContext.fillRect(i, 0, 1, x);
+		});
+
+		animationFrameHandle = requestAnimationFrame(draw);
+	};
+
+	videoLookahead.addEventListener("play", () => {
+		if (audioContext.state === "suspended") {
+			audioContext.resume();
+		}
+		animationFrameHandle = requestAnimationFrame(draw);
+	});
+
+	videoLookahead.addEventListener("pause", () => {
+		if (audioContext.state === "running") {
+			audioContext.suspend();
+		}
+		cancelAnimationFrame(animationFrameHandle);
+	});
+	//#endregion
+})();
+		</script>
+	</body>
+</html>
