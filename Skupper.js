@@ -1,3 +1,4 @@
+import Animloop from "./Animloop.js";
 import Synchronizer from "./Synchronizer.js";
 
 const createLookaheadVideo = video => {
@@ -33,9 +34,7 @@ export default class Skupper {
 	analyser;
 	analyserBuffer;
 
-	animationFrameHandle = null;
-
-	onAnimationFrame;
+	animloop;
 
 	constructor(video, {
 		lookbehindMargin,
@@ -60,7 +59,7 @@ export default class Skupper {
 		this.analyserBuffer = new Float32Array(analyser.fftSize);
 
 
-		this.onAnimationFrame = onAnimationFrame;
+		this.animloop = new Animloop(onAnimationFrame);
 		this.attachEvents(this.lookaheadVideo);
 	}
 
@@ -78,13 +77,6 @@ export default class Skupper {
 	}
 
 	attachEvents(analysedVideo) {
-		const animationFrameCallback = now => {
-			this.onAnimationFrame?.(now);
-
-			if (this.animationFrameHandle === null) return;
-			this.animationFrameHandle = requestAnimationFrame(animationFrameCallback);
-		};
-
 		const onstart = event => {
 			console.log(event.type);
 	
@@ -92,8 +84,7 @@ export default class Skupper {
 				this.audioContext.resume();
 			}
 	
-			if (this.animationFrameHandle !== null) return;
-			this.animationFrameHandle = requestAnimationFrame(animationFrameCallback);
+			this.animloop.start();
 		};
 
 		const onstop = event => {
@@ -103,8 +94,7 @@ export default class Skupper {
 				this.audioContext.suspend();
 			}
 
-			cancelAnimationFrame(this.animationFrameHandle);
-			this.animationFrameHandle = null;
+			this.animloop.stop();
 		};
 
 		const logEvent = event => console.log(event.type);

@@ -1,3 +1,5 @@
+import Animloop from "./Animloop.js";
+
 const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.1;
 const MAX_TIME_DRIFT = 0.02; // s
 
@@ -11,8 +13,6 @@ export default class Synchronizer {
 	targetVideo;
 
 	offsetTime;
-
-	animationFrameHandle = null;
 
 	constructor(controllerVideo, targetVideo, offsetTime=0) {
 		this.controllerVideo = controllerVideo;
@@ -84,13 +84,14 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
-		const speedAdjust = now => {
+		const animloop = new Animloop(now => {
 			const targetVideoTimeDrift = targetVideo.currentTime - controllerVideo.currentTime - this.offsetTime;
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next `timeupdate`.
 			// Changing playback rate to many different values can cause slowdown.
 
 			// TODO edge condition (when video is near end).
+
 			// console.log(targetVideoTimeDrift);
 
 			if (targetVideoTimeDrift < -MAX_TIME_DRIFT) {
@@ -100,10 +101,17 @@ export default class Synchronizer {
 			} else {
 				this.resyncRate();
 			}
+		});
 
-			requestAnimationFrame(speedAdjust);
+		targetVideo.addEventListener("playing", () => {
+			animloop.start();
+		});
+
+		const targetAnimloopOnstop = () => {
+			animloop.stop();
 		};
-		requestAnimationFrame(speedAdjust);
+		targetVideo.addEventListener("pause", targetAnimloopOnstop);
+		targetVideo.addEventListener("waiting", targetAnimloopOnstop);
 	}
 
 	resyncTime() {
