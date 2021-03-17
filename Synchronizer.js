@@ -1,5 +1,10 @@
-const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.5;
-const MAX_TIME_DRIFT = 0.01; // s
+const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.1;
+const MAX_TIME_DRIFT = 0.02; // s
+
+const MIN_SPEED = 1 / 16;
+const MAX_SPEED = 16;
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export default class Synchronizer {
 	controllerVideo;
@@ -18,7 +23,7 @@ export default class Synchronizer {
 		this.resyncTime();
 		this.resyncRate();
 
-		// TODO doesn't work
+		// TODO `play` and `pause` calls may sometimes interrupt each other (when setting too quickly?)
 
 		const controllerOnplaying = async event => {
 			controllerVideo.removeEventListener("playing", controllerOnplaying);
@@ -32,10 +37,14 @@ export default class Synchronizer {
 		};
 
 		const controllerOnpause = async event => {
+			controllerVideo.removeEventListener("playing", controllerOnplaying);
+
 			if (!targetVideo.paused) {
 				await targetVideo.pause();
 			}
 			this.resyncTime();
+
+			controllerVideo.addEventListener("playing", controllerOnplaying);
 		};
 
 		const onwaiting = async event => {
@@ -75,7 +84,7 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
-		controllerVideo.addEventListener("timeupdate", () => {
+		const speedAdjust = now => {
 			const targetVideoTimeDrift = targetVideo.currentTime - controllerVideo.currentTime - this.offsetTime;
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next `timeupdate`.
@@ -85,13 +94,16 @@ export default class Synchronizer {
 			// console.log(targetVideoTimeDrift);
 
 			if (targetVideoTimeDrift < -MAX_TIME_DRIFT) {
-				targetVideo.playbackRate = targetVideo.playbackRate * TIME_DRIFT_CORRECTION_SPEED_FACTOR;
+				targetVideo.playbackRate = clamp(targetVideo.playbackRate * TIME_DRIFT_CORRECTION_SPEED_FACTOR, MIN_SPEED, MAX_SPEED);
 			} else if (targetVideoTimeDrift > MAX_TIME_DRIFT) {
-				targetVideo.playbackRate = targetVideo.playbackRate / TIME_DRIFT_CORRECTION_SPEED_FACTOR;
+				targetVideo.playbackRate = clamp(targetVideo.playbackRate / TIME_DRIFT_CORRECTION_SPEED_FACTOR, MIN_SPEED, MAX_SPEED);
 			} else {
 				this.resyncRate();
 			}
-		});
+
+			requestAnimationFrame(speedAdjust);
+		};
+		requestAnimationFrame(speedAdjust);
 	}
 
 	resyncTime() {
