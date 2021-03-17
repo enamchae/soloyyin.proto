@@ -8,6 +8,14 @@
 			video {
 				max-width: 400px;
 			}
+
+			.db {
+				background: #fdd;
+			}
+
+			.db.target {
+				background: #bff;
+			}
 		</style>
 	</head>
 
@@ -15,11 +23,12 @@
 		<div><button class="debugger">Debugger button</button></div>
 		<div><button class="interaction">Interaction button</button></div>
 
-		<video src="./sample.mp4" controls></video>
+		<video src="./samples/1.mp3" controls></video>
 		<canvas></canvas>
-		<span></span>
+		<div class="db">.-.</div>
 
 		<script type="module">
+import Skupper from "./Skupper.js";
 import Synchronizer from "./Synchronizer.js";
 
 document.querySelector(".debugger").addEventListener("click", () => {
@@ -28,44 +37,54 @@ document.querySelector(".debugger").addEventListener("click", () => {
 
 const video = document.querySelector("video");
 const canvas = document.querySelector("canvas");
-const span = document.querySelector("span");
+const dbCounter = document.querySelector(".db");
+
+const THRESHOLD = -30;
 
 (async () => {
-	const lookaheadMargin = 0.5;
-	const lookbehindMargin = 0.5;
+	const skupper = new Skupper(video, {
+		lookbehindMargin: 0.5,
+		lookaheadMargin: 0.5,
 
-	const videoLookahead = document.createElement("video");
-	videoLookahead.src = video.src;
-	videoLookahead.preload = true;
-	videoLookahead.controls = true;
+		onAnimationFrame: () => {
+			const maxDiffDb = Skupper.dbFromAmp(skupper.maxAmpFromAnalyser());
 
-	video.insertAdjacentElement("afterend", videoLookahead);
+			dbCounter.textContent = maxDiffDb;
+			dbCounter.classList.toggle("target", maxDiffDb >= THRESHOLD);
 
+			let newPlaybackRate;
+			if (maxDiffDb < THRESHOLD) {
+				newPlaybackRate = 8;
+			} else {
+				newPlaybackRate = 1;
+			}
 
-	const synchronizer = new Synchronizer(video, videoLookahead, lookaheadMargin);
+			if (video.playbackRate !== newPlaybackRate) {
+				video.playbackRate = newPlaybackRate;
+			}
 
+			canvasContext.save();
+			canvasContext.resetTransform();
+			canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+			canvasContext.restore();
 
-	//#region AudioContext
+			skupper.analyserBuffer.forEach((sample, i) => {
+				canvasContext.fillRect(i, 0, 1, sample);
+			});
+		},
+	});
 
-	const createAnalyserAudioContext = (video, sampleRate=3000, fftSize=2048) => {
-		const audioContext = new AudioContext({sampleRate});
+	skupper.lookaheadVideo.controls = true;
+	video.insertAdjacentElement("afterend", skupper.lookaheadVideo);
 
-		const audioSrc = new MediaElementAudioSourceNode(audioContext, {mediaElement: video});
+	canvas.width = skupper.analyserBuffer.length;
+	canvas.height = 120;
+	const canvasContext = canvas.getContext("2d");
+	canvasContext.scale(1, -canvas.height / 2);
+	canvasContext.translate(0, -1);
+	canvasContext.fillStyle = "#aaa";
 
-		const analyser = new AnalyserNode(audioContext, {fftSize});
-
-		audioSrc.connect(analyser);
-
-		return {
-			audioContext,
-			analyser,
-		};
-	};
-
-	const {audioContext, analyser} = createAnalyserAudioContext(videoLookahead);
-	const analyserBuffer = new Float32Array(analyser.fftSize);
-
- 	//#region MinMaxer worklet
+/* 	//#region MinMaxer worklet
 
 	class MinMaxerNode extends AudioWorkletNode {
 		constructor(audioContext, {historyDuration=0}={}) {
@@ -101,99 +120,8 @@ const span = document.querySelector("span");
 	}, 2000); */
 	//#endregion
 
-	analyser.connect(minMaxer);//.connect(audioContext.destination);
-	//#endregion
-
-	canvas.width = analyserBuffer.length;
-	canvas.height = 120;
-	const canvasContext = canvas.getContext("2d");
-	canvasContext.scale(1, -canvas.height / 2);
-	canvasContext.translate(0, -1);
-	canvasContext.fillStyle = "#aaa";
-
-
-	//#region Loop
-
-	const maxDiffDbFromExtrema = (sampleMin, sampleMax) => {
-		const maxDiffAmplitude = (sampleMax - sampleMin) / 2 / video.volume;
-		const maxDiffDb = 20 * Math.log10(maxDiffAmplitude);
-		return maxDiffDb;
-	};
-
-	const maxDiffDbFromAnalyser = () => {
-		analyser.getFloatTimeDomainData(analyserBuffer);
-
-		return maxDiffDbFromExtrema(Math.min(...analyserBuffer), Math.max(...analyserBuffer));
-	};
-
-	const maxDiffDbFromMinMaxer = () => new Promise(resolve => {
-		minMaxer.port.onmessage = event => {
-			const {sampleMin, sampleMax} = event.data;
-
-			console.timeEnd("minMaxer");
-
-			resolve(maxDiffDbFromExtrema(sampleMin, sampleMax));
-		};
-
-		console.time("minMaxer");
-		minMaxer.port.postMessage({
-			currentTime: video.currentTime,
-			paused: video.paused,
-		});
-	});
-
-	let animationFrameHandle;
-
-	let prev;
-
-	const draw = async now => {
-		if (!isNaN(prev)) {
-			console.log(now - prev);
-		}
-
-		prev = now;
-
-		const maxDiffDb = await maxDiffDbFromMinMaxer();
-
-		span.textContent = maxDiffDb;
-
-		let newPlaybackRate;
-		if (maxDiffDb < -12) {
-			newPlaybackRate = 8;
-		} else {
-			newPlaybackRate = .5;
-		}
-
-		if (video.playbackRate !== newPlaybackRate) {
-			video.playbackRate = newPlaybackRate;
-		}
-
-		canvasContext.save();
-		canvasContext.resetTransform();
-		canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-		canvasContext.restore();
-
-		analyserBuffer.forEach((x, i) => {
-			canvasContext.fillRect(i, 0, 1, x);
-		});
-
-		animationFrameHandle = requestAnimationFrame(draw);
-	};
-
-	videoLookahead.addEventListener("play", () => {
-		if (audioContext.state === "suspended") {
-			audioContext.resume();
-		}
-		animationFrameHandle = requestAnimationFrame(draw);
-	});
-
-	videoLookahead.addEventListener("pause", () => {
-		if (audioContext.state === "running") {
-			audioContext.suspend();
-		}
-		cancelAnimationFrame(animationFrameHandle);
-	});
-	//#endregion
+	// skupper.analyser.connect(minMaxer);//.connect(audioContext.destination);
+	// skupper.analyser.connect(skupper.audioContext.destination);
 })();
 		</script>
 	</body>

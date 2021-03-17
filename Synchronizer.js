@@ -15,68 +15,26 @@ export default class Synchronizer {
 		this.resyncTime();
 		this.resyncRate();
 
-		// TODO doesn't work 
+		// TODO doesn't work
 
-		const onplayTarget = async event => {
-			event.preventDefault();
+		const onplaying = async event => {
+			targetVideo.removeEventListener("playing", onplaying);
 
-			// console.log("e");
-
-			targetVideo.removeEventListener("play", onplayTarget);
-			targetVideo.removeEventListener("pause", onpauseTarget);
-			// targetVideo.removeEventListener("timeupdate", ontimeupdate);
-
-			// this.resyncTime();
-
-			const currentTime = targetVideo.currentTime;
-
-			targetVideo.currentTime = currentTime;
-			bufferVideo.currentTime = currentTime + this.offsetTime;
-
-			// console.log("holup");
-			
-			await Promise.all([
-				targetVideo.play(),
-				bufferVideo.play(),
-			]);
-
-			targetVideo.addEventListener("play", onplayTarget);
-			targetVideo.addEventListener("pause", onpauseTarget);
-			// targetVideo.addEventListener("timeupdate", ontimeupdate);
-
-			// this.startResyncLoop();
-		};
-
-		const onpauseTarget = async event => {
-			// bufferVideo.removeEventListener("pause", onpauseTarget);
-
-			await bufferVideo.pause();
+			await bufferVideo.play();
 
 			this.resyncTime();
-			
-			// this.stopResyncLoop();
+
+			targetVideo.addEventListener("playing", onplaying);
 		};
 
-/* 		const ontimeupdate = () => {
-			console.clear();
-			console.log(bufferVideo.currentTime - targetVideo.currentTime);
+		targetVideo.addEventListener("playing", onplaying);
 
-			this.resyncTime();
-		}; */
+		targetVideo.addEventListener("pause", () => {
 
-		const onpauseBuffer = async event => {
-
-		};
-
-		targetVideo.addEventListener("play", onplayTarget);
-		targetVideo.addEventListener("pause", onpauseTarget);
-		// targetVideo.addEventListener("timeupdate", ontimeupdate);
-		targetVideo.addEventListener("ratechange", () => {
-			this.resyncRate();
 		});
 
-		bufferVideo.addEventListener("pause", () => {
-
+		targetVideo.addEventListener("ratechange", () => {
+			this.resyncRate();
 		});
 	}
 
@@ -87,25 +45,4 @@ export default class Synchronizer {
 	resyncRate() {
 		this.bufferVideo.playbackRate = this.targetVideo.playbackRate
 	}
-
-/* 	startResyncLoop() {
-
-		if (this.animationFrameHandle !== null) return;
-
-		const resync = () => {
-			if (this.animationFrameHandle === null) return;
-
-			const currentTime = this.targetVideo.currentTime;
-			this.targetVideo.currentTime = currentTime;
-			this.bufferVideo.currentTime = currentTime;
-
-			this.animationFrameHandle = requestAnimationFrame(resync);
-		};
-		this.animationFrameHandle = requestAnimationFrame(resync);
-	}
-
-	stopResyncLoop() {
-		this.animationFrameHandle = null;
-		cancelAnimationFrame(this.animationFrameHandle);
-	} */
 }
