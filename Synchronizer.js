@@ -1,14 +1,17 @@
+const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.5;
+const MAX_TIME_DRIFT = 0.01; // s
+
 export default class Synchronizer {
+	controllerVideo;
 	targetVideo;
-	bufferVideo;
 
 	offsetTime;
 
 	animationFrameHandle = null;
 
-	constructor(targetVideo, bufferVideo, offsetTime=0) {
+	constructor(controllerVideo, targetVideo, offsetTime=0) {
+		this.controllerVideo = controllerVideo;
 		this.targetVideo = targetVideo;
-		this.bufferVideo = bufferVideo;
 
 		this.offsetTime = offsetTime;
 
@@ -17,32 +20,85 @@ export default class Synchronizer {
 
 		// TODO doesn't work
 
-		const onplaying = async event => {
-			targetVideo.removeEventListener("playing", onplaying);
+		const controllerOnplaying = async event => {
+			controllerVideo.removeEventListener("playing", controllerOnplaying);
 
-			await bufferVideo.play();
-
+			if (targetVideo.paused) {
+				await targetVideo.play();
+			}
 			this.resyncTime();
 
-			targetVideo.addEventListener("playing", onplaying);
+			controllerVideo.addEventListener("playing", controllerOnplaying);
 		};
 
-		targetVideo.addEventListener("playing", onplaying);
+		const controllerOnpause = async event => {
+			if (!targetVideo.paused) {
+				await targetVideo.pause();
+			}
+			this.resyncTime();
+		};
 
-		targetVideo.addEventListener("pause", () => {
+		const onwaiting = async event => {
+			controllerVideo.removeEventListener("playing", controllerOnplaying);
+			controllerVideo.removeEventListener("pause", controllerOnpause);
+			controllerVideo.removeEventListener("waiting", onwaiting);
+			targetVideo.removeEventListener("waiting", onwaiting);
 
+			await Promise.all([
+				controllerVideo.pause(),
+				targetVideo.pause(),
+			]);
+			this.resyncTime();
+			await Promise.all([
+				controllerVideo.play(),
+				targetVideo.play(),
+			]);
+
+			controllerVideo.addEventListener("playing", controllerOnplaying);
+			controllerVideo.addEventListener("pause", controllerOnpause);
+			controllerVideo.addEventListener("waiting", onwaiting);
+			targetVideo.addEventListener("waiting", onwaiting);
+		};
+
+		controllerVideo.addEventListener("playing", controllerOnplaying);
+		controllerVideo.addEventListener("pause", controllerOnpause);
+
+		controllerVideo.addEventListener("waiting", onwaiting);
+
+		targetVideo.addEventListener("waiting", onwaiting);
+
+		controllerVideo.addEventListener("seeked", () => {
+			this.resyncTime();
 		});
 
-		targetVideo.addEventListener("ratechange", () => {
+		controllerVideo.addEventListener("ratechange", () => {
 			this.resyncRate();
+		});
+
+		controllerVideo.addEventListener("timeupdate", () => {
+			const targetVideoTimeDrift = targetVideo.currentTime - controllerVideo.currentTime - this.offsetTime;
+
+			// TODO inconsistent. Current settings may cause target media to overshoot by next `timeupdate`.
+			// Changing playback rate to many different values can cause slowdown.
+
+			// TODO edge condition (when video is near end).
+			// console.log(targetVideoTimeDrift);
+
+			if (targetVideoTimeDrift < -MAX_TIME_DRIFT) {
+				targetVideo.playbackRate = targetVideo.playbackRate * TIME_DRIFT_CORRECTION_SPEED_FACTOR;
+			} else if (targetVideoTimeDrift > MAX_TIME_DRIFT) {
+				targetVideo.playbackRate = targetVideo.playbackRate / TIME_DRIFT_CORRECTION_SPEED_FACTOR;
+			} else {
+				this.resyncRate();
+			}
 		});
 	}
 
 	resyncTime() {
-		this.bufferVideo.currentTime = this.targetVideo.currentTime + this.offsetTime;
+		this.targetVideo.currentTime = this.controllerVideo.currentTime + this.offsetTime;
 	}
 
 	resyncRate() {
-		this.bufferVideo.playbackRate = this.targetVideo.playbackRate
+		this.targetVideo.playbackRate = this.controllerVideo.playbackRate;
 	}
 }

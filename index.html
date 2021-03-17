@@ -23,7 +23,7 @@
 		<div><button class="debugger">Debugger button</button></div>
 		<div><button class="interaction">Interaction button</button></div>
 
-		<video src="./samples/1.mp3" controls></video>
+		<video src="./samples/1.mp4" controls></video>
 		<canvas></canvas>
 		<div class="db">.-.</div>
 
@@ -59,9 +59,9 @@ const THRESHOLD = -30;
 				newPlaybackRate = 1;
 			}
 
-			if (video.playbackRate !== newPlaybackRate) {
+/* 			if (video.playbackRate !== newPlaybackRate) {
 				video.playbackRate = newPlaybackRate;
-			}
+			} */
 
 			canvasContext.save();
 			canvasContext.resetTransform();

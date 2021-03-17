@@ -48,9 +48,10 @@ export default class Skupper {
 		this.lookbehindMargin = lookbehindMargin;
 		this.lookaheadMargin = lookaheadMargin;
 
-		this.lookaheadVideo = createLookaheadVideo(video);
 
+		this.lookaheadVideo = createLookaheadVideo(video);
 		this.synchronizer = new Synchronizer(video, this.lookaheadVideo, lookaheadMargin);
+
 
 		const {audioContext, analyser} = createAnalyserAudioContext(this.lookaheadVideo);
 
@@ -58,8 +59,8 @@ export default class Skupper {
 		this.analyser = analyser;
 		this.analyserBuffer = new Float32Array(analyser.fftSize);
 
-		this.onAnimationFrame = onAnimationFrame;
 
+		this.onAnimationFrame = onAnimationFrame;
 		this.attachEvents(this.lookaheadVideo);
 	}
 
@@ -113,6 +114,9 @@ export default class Skupper {
 		analysedVideo.addEventListener("play", logEvent);
 		analysedVideo.addEventListener("stalled", logEvent);
 	
+		// The `playing` event fires when the media truly begins or resumes playing, and 
+		// `pause` and `waiting` fire when the media truly stops playing.
+
 		analysedVideo.addEventListener("playing", onstart);
 	
 		analysedVideo.addEventListener("pause", onstop);
