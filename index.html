@@ -37,7 +37,20 @@ document.querySelector(".debugger").addEventListener("click", () => {
 });
 
 const video = document.querySelector("video");
+
 const canvas = document.querySelector("canvas");
+const canvasContext = canvas.getContext("2d");
+
+const drawTimeDomain = analyserBuffer => {
+	canvasContext.save();
+	canvasContext.resetTransform();
+	canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+	canvasContext.restore();
+
+	analyserBuffer.forEach((sample, i) => {
+		canvasContext.fillRect(i, 0, 1, sample);
+	});
+};
 
 const dbDisplay = document.querySelector(".db");
 const timeDriftDisplay = document.querySelector(".timedrift");
@@ -50,30 +63,20 @@ const THRESHOLD_DB = -16;
 		lookaheadMargin: 0.5,
 
 		onAnimationFrame: () => {
-			const maxDiffDb = Skupper.dbFromAmp(skupper.maxAmpFromAnalyser());
+			const maxDb = Skupper.dbFromAmp(skupper.maxAmpFromAnalyser());
 
-			dbDisplay.textContent = maxDiffDb;
-			dbDisplay.classList.toggle("target", maxDiffDb >= THRESHOLD_DB);
+			dbDisplay.textContent = maxDb;
+			dbDisplay.classList.toggle("target", maxDb >= THRESHOLD_DB);
 
-			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift();
+			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift().toFixed(6);
 
-			let newPlaybackRate;
-			if (maxDiffDb < THRESHOLD_DB) {
-				newPlaybackRate = 8;
+			if (maxDb < THRESHOLD_DB) {
+				video.playbackRate = 2;
 			} else {
-				newPlaybackRate = 1;
+				video.playbackRate = 0.5;
 			}
 
-			// video.playbackRate = newPlaybackRate;
-
-			canvasContext.save();
-			canvasContext.resetTransform();
-			canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-			canvasContext.restore();
-
-			skupper.analyserBuffer.forEach((sample, i) => {
-				canvasContext.fillRect(i, 0, 1, sample);
-			});
+			drawTimeDomain(skupper.analyserBuffer);
 		},
 	});
 
@@ -82,7 +85,6 @@ const THRESHOLD_DB = -16;
 
 	canvas.width = skupper.analyserBuffer.length;
 	canvas.height = 120;
-	const canvasContext = canvas.getContext("2d");
 	canvasContext.scale(1, -canvas.height / 2);
 	canvasContext.translate(0, -1);
 	canvasContext.fillStyle = "#aaa";

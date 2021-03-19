@@ -83,8 +83,15 @@ export default class Skupper {
 	}
 
 	attachEvents(analysedVideo) {
+		const logEvent = event => console.log(event.type);
+
+		// analysedVideo.addEventListener("canplay", logEvent);
+		// analysedVideo.addEventListener("loadeddata", logEvent);
+		// analysedVideo.addEventListener("play", logEvent);
+		analysedVideo.addEventListener("stalled", logEvent); 
+
 		const onstart = event => {
-			console.log(event.type);
+			// logEvent(event);
 	
 			if (this.audioContext.state === "suspended") {
 				this.audioContext.resume();
@@ -94,7 +101,7 @@ export default class Skupper {
 		};
 
 		const onstop = event => {
-			console.log(event.type);
+			// logEvent(event);
 
 			if (this.audioContext.state === "running") {
 				this.audioContext.suspend();
@@ -102,13 +109,6 @@ export default class Skupper {
 
 			this.animloop.stop();
 		};
-
-		const logEvent = event => console.log(event.type);
-
-		analysedVideo.addEventListener("canplay", logEvent);
-		analysedVideo.addEventListener("loadeddata", logEvent);
-		analysedVideo.addEventListener("play", logEvent);
-		analysedVideo.addEventListener("stalled", logEvent);
 	
 		// The `playing` event fires when the media truly begins or resumes playing, and 
 		// `pause` and `waiting` fire when the media truly stops playing.
