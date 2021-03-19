@@ -26,6 +26,7 @@
 		<video src="./samples/1.mp4" controls></video>
 		<canvas></canvas>
 		<div class="db">.-.</div>
+		<div class="timedrift">._.</div>
 
 		<script type="module">
 import Skupper from "./Skupper.js";
@@ -37,9 +38,11 @@ document.querySelector(".debugger").addEventListener("click", () => {
 
 const video = document.querySelector("video");
 const canvas = document.querySelector("canvas");
-const dbCounter = document.querySelector(".db");
 
-const THRESHOLD = -30;
+const dbDisplay = document.querySelector(".db");
+const timeDriftDisplay = document.querySelector(".timedrift");
+
+const THRESHOLD_DB = -16;
 
 (async () => {
 	const skupper = new Skupper(video, {
@@ -49,19 +52,19 @@ const THRESHOLD = -30;
 		onAnimationFrame: () => {
 			const maxDiffDb = Skupper.dbFromAmp(skupper.maxAmpFromAnalyser());
 
-			dbCounter.textContent = maxDiffDb;
-			dbCounter.classList.toggle("target", maxDiffDb >= THRESHOLD);
+			dbDisplay.textContent = maxDiffDb;
+			dbDisplay.classList.toggle("target", maxDiffDb >= THRESHOLD_DB);
+
+			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift();
 
 			let newPlaybackRate;
-			if (maxDiffDb < THRESHOLD) {
+			if (maxDiffDb < THRESHOLD_DB) {
 				newPlaybackRate = 8;
 			} else {
 				newPlaybackRate = 1;
 			}
 
-/* 			if (video.playbackRate !== newPlaybackRate) {
-				video.playbackRate = newPlaybackRate;
-			} */
+			// video.playbackRate = newPlaybackRate;
 
 			canvasContext.save();
 			canvasContext.resetTransform();

@@ -63,8 +63,14 @@ export default class Skupper {
 		this.attachEvents(this.lookaheadVideo);
 	}
 
+	// Assuming a maximum amplitude of 1
+
 	static dbFromAmp(amp) {
 		return 20 * Math.log10(amp);
+	}
+
+	static ampFromDb(db) {
+		return 10 ** (db / 20);
 	}
 
 	maxAmpFromExtrema(sampleMin, sampleMax) {

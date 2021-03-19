@@ -1,6 +1,6 @@
 import Animloop from "./Animloop.js";
 
-const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.1;
+const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.125;
 const MAX_TIME_DRIFT = 0.02; // s
 
 const MIN_SPEED = 1 / 16;
@@ -13,6 +13,7 @@ export default class Synchronizer {
 	targetVideo;
 
 	offsetTime;
+	offsetRateFactor = 1;
 
 	constructor(controllerVideo, targetVideo, offsetTime=0) {
 		this.controllerVideo = controllerVideo;
@@ -85,22 +86,25 @@ export default class Synchronizer {
 		});
 
 		const animloop = new Animloop(now => {
-			const targetVideoTimeDrift = targetVideo.currentTime - controllerVideo.currentTime - this.offsetTime;
+			const targetVideoTimeDrift = this.targetVideoTimeDrift();
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next `timeupdate`.
 			// Changing playback rate to many different values can cause slowdown.
 
-			// TODO edge condition (when video is near end).
+			// Edge condition (near end of video, when 1 video ends) is handled by the target video firing `pause`
+			// when ending.
 
 			// console.log(targetVideoTimeDrift);
 
 			if (targetVideoTimeDrift < -MAX_TIME_DRIFT) {
-				targetVideo.playbackRate = clamp(targetVideo.playbackRate * TIME_DRIFT_CORRECTION_SPEED_FACTOR, MIN_SPEED, MAX_SPEED);
+				this.offsetRateFactor = TIME_DRIFT_CORRECTION_SPEED_FACTOR;
 			} else if (targetVideoTimeDrift > MAX_TIME_DRIFT) {
-				targetVideo.playbackRate = clamp(targetVideo.playbackRate / TIME_DRIFT_CORRECTION_SPEED_FACTOR, MIN_SPEED, MAX_SPEED);
+				this.offsetRateFactor = 1 / TIME_DRIFT_CORRECTION_SPEED_FACTOR;
 			} else {
-				this.resyncRate();
+				this.offsetRateFactor = 1;
 			}
+
+			this.resyncRate();
 		});
 
 		targetVideo.addEventListener("playing", () => {
@@ -119,6 +123,10 @@ export default class Synchronizer {
 	}
 
 	resyncRate() {
-		this.targetVideo.playbackRate = this.controllerVideo.playbackRate;
+		this.targetVideo.playbackRate = clamp(this.controllerVideo.playbackRate * this.offsetRateFactor, MIN_SPEED, MAX_SPEED);
+	}
+
+	targetVideoTimeDrift() {
+		return this.targetVideo.currentTime - this.controllerVideo.currentTime - this.offsetTime;
 	}
 }
