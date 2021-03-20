@@ -63,14 +63,14 @@ const THRESHOLD_DB = -16;
 		lookaheadMargin: 0.5,
 
 		onAnimationFrame: () => {
-			const maxDb = Skupper.dbFromAmp(skupper.maxAmpFromAnalyser());
+			const maxDbfs = Skupper.dbfsFromAmp(skupper.maxAmpFromAnalyser());
 
-			dbDisplay.textContent = maxDb;
-			dbDisplay.classList.toggle("target", maxDb >= THRESHOLD_DB);
+			dbDisplay.textContent = maxDbfs;
+			dbDisplay.classList.toggle("target", maxDbfs >= THRESHOLD_DB);
 
 			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift().toFixed(6);
 
-			if (maxDb < THRESHOLD_DB) {
+			if (maxDbfs < THRESHOLD_DB) {
 				video.playbackRate = 2;
 			} else {
 				video.playbackRate = 0.5;

@@ -28,8 +28,8 @@ export default class Animloop {
 	}
 
 	createAnimationFrameCallback() {
-		return now => {
-			this.onAnimationFrame(now);
+		return async now => {
+			await this.onAnimationFrame(now);
 
 			if (this.stopped) return;
 			this.animationFrameHandle = requestAnimationFrame(this.animationFrameCallback);
