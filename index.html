@@ -23,7 +23,7 @@
 		<div><button class="debugger">Debugger button</button></div>
 		<div><button class="interaction">Interaction button</button></div>
 
-		<video src="./samples/1.mp4" controls></video>
+		<video src="./samples/1.mp4" preload controls></video>
 		<canvas></canvas>
 		<div class="db">.-.</div>
 		<div class="timedrift">._.</div>
@@ -71,7 +71,7 @@ const THRESHOLD_DB = -16;
 			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift().toFixed(6);
 
 			if (maxDbfs < THRESHOLD_DB) {
-				video.playbackRate = 2;
+				video.playbackRate = 4;
 			} else {
 				video.playbackRate = 0.5;
 			}
@@ -80,8 +80,8 @@ const THRESHOLD_DB = -16;
 		},
 	});
 
-	skupper.lookaheadVideo.controls = true;
-	video.insertAdjacentElement("afterend", skupper.lookaheadVideo);
+	// skupper.lookaheadMedia.controls = true;
+	// video.insertAdjacentElement("afterend", skupper.lookaheadMedia>);
 
 	canvas.width = skupper.analyserBuffer.length;
 	canvas.height = 120;

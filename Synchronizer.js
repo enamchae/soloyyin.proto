@@ -9,6 +9,17 @@ const MAX_SPEED = 16;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+const pauseVideo = async video => {
+	// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
+	// `play` will not have an effect on the current video time unless the video has ended (in which case it will restart the video)[citation needed]
+	if (!video.ended) {
+		await video.play();
+	}
+	video.pause();
+};
+
+const playVideo = video => video.play();
+
 export default class Synchronizer {
 	controllerVideo;
 	targetVideo;
@@ -27,27 +38,31 @@ export default class Synchronizer {
 		this.resyncTime();
 		this.resyncRate();
 
-		// TODO `play` and `pause` calls may sometimes interrupt each other (when setting too quickly?)
+		// TODO target video will sometimes pause and not restart
 
 		const controllerOnplaying = async () => {
 			controllerVideo.removeEventListener("playing", controllerOnplaying);
+			targetVideo.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
 
 			if (targetVideo.paused) {
-				await targetVideo.play();
+				await playVideo(targetVideo);
 			}
-
+			
 			controllerVideo.addEventListener("playing", controllerOnplaying);
+			targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
 		};
 
 		const controllerOnpause = async () => {
 			controllerVideo.removeEventListener("playing", controllerOnplaying);
+			targetVideo.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
 
 			if (!targetVideo.paused) {
-				targetVideo.pause();
+				await pauseVideo(targetVideo);
 			}
 			this.resyncTime();
 
 			controllerVideo.addEventListener("playing", controllerOnplaying);
+			targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
 		};
 
 		const ignoreEventsAndPitstopResyncTime = async () => {
@@ -66,9 +81,7 @@ export default class Synchronizer {
 
 		controllerVideo.addEventListener("playing", controllerOnplaying);
 		controllerVideo.addEventListener("pause", controllerOnpause);
-
 		controllerVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
-
 		targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
 
 		controllerVideo.addEventListener("seeked", () => {
@@ -126,14 +139,16 @@ export default class Synchronizer {
 	}
 
 	async pitstopResyncTime() {
-		this.controllerVideo.pause();
-		this.targetVideo.pause();
+		await Promise.all([
+			pauseVideo(this.controllerVideo),
+			pauseVideo(this.targetVideo),
+		]);
 
 		this.resyncTime();
 
 		await Promise.all([
-			this.controllerVideo.play(),
-			this.targetVideo.play(),
+			playVideo(this.controllerVideo),
+			playVideo(this.targetVideo),
 		]);
 	}
 
