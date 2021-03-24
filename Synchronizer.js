@@ -9,29 +9,29 @@ const MAX_SPEED = 16;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-const pauseVideo = async video => {
+const pauseMedia = async media => {
 	// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
-	// `play` will not have an effect on the current video time unless the video has ended (in which case it will restart the video)[citation needed]
-	if (!video.ended) {
-		await video.play();
+	// `play` will not have an effect on the current time[citation needed] unless the media has ended (in which case it will restart the media)
+	if (!media.ended) {
+		await media.play();
 	}
-	video.pause();
+	media.pause();
 };
 
-const playVideo = video => video.play();
+const playMedia = media => media.play();
 
 export default class Synchronizer {
-	controllerVideo;
-	targetVideo;
+	controllerMedia;
+	targetMedia;
 
 	offsetTime;
 	offsetRateFactor = 1;
 
 	// TODO very long constructor
 
-	constructor(controllerVideo, targetVideo, offsetTime=0) {
-		this.controllerVideo = controllerVideo;
-		this.targetVideo = targetVideo;
+	constructor(controllerMedia, targetMedia, offsetTime=0) {
+		this.controllerMedia = controllerMedia;
+		this.targetMedia = targetMedia;
 
 		this.offsetTime = offsetTime;
 
@@ -41,54 +41,73 @@ export default class Synchronizer {
 		// TODO target video will sometimes pause and not restart
 
 		const controllerOnplaying = async () => {
-			controllerVideo.removeEventListener("playing", controllerOnplaying);
-			targetVideo.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			// console.log("!! controllerOnplaying");
+			// console.time("!! controllerOnplaying");
 
-			if (targetVideo.paused) {
-				await playVideo(targetVideo);
+			controllerMedia.removeEventListener("playing", controllerOnplaying);
+			targetMedia.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+
+			if (targetMedia.paused) {
+				await playMedia(targetMedia);
 			}
 			
-			controllerVideo.addEventListener("playing", controllerOnplaying);
-			targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			controllerMedia.addEventListener("playing", controllerOnplaying);
+			targetMedia.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+
+			// console.timeEnd("!! controllerOnplaying");
 		};
 
 		const controllerOnpause = async () => {
-			controllerVideo.removeEventListener("playing", controllerOnplaying);
-			targetVideo.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			// console.log("!! controllerOnpause");
+			// console.time("!! controllerOnpause");
 
-			if (!targetVideo.paused) {
-				await pauseVideo(targetVideo);
+			controllerMedia.removeEventListener("playing", controllerOnplaying);
+			targetMedia.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+
+			if (!targetMedia.paused) {
+				await pauseMedia(targetMedia);
 			}
 			this.resyncTime();
 
-			controllerVideo.addEventListener("playing", controllerOnplaying);
-			targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			controllerMedia.addEventListener("playing", controllerOnplaying);
+			targetMedia.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+
+			// console.timeEnd("!! controllerOnpause");
 		};
 
 		const ignoreEventsAndPitstopResyncTime = async () => {
-			controllerVideo.removeEventListener("playing", controllerOnplaying);
-			controllerVideo.removeEventListener("pause", controllerOnpause);
-			controllerVideo.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
-			targetVideo.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			// console.log("!! ignoreEventsAndPitstopResyncTime", event, new Error());
+			// console.time("!! ignoreEventsAndPitstopResyncTime");
 
-			await this.pitstopResyncTime();
+			// TODO user can still play while the media is being paused, which causes synchronizer to desync
 
-			controllerVideo.addEventListener("playing", controllerOnplaying);
-			controllerVideo.addEventListener("pause", controllerOnpause);
-			controllerVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
-			targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			controllerMedia.removeEventListener("playing", controllerOnplaying);
+			controllerMedia.removeEventListener("pause", controllerOnpause);
+			controllerMedia.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			targetMedia.removeEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			
+			await this.pauseAllMedia();
+			this.resyncTime();
+			await this.playAllMedia();
+
+			controllerMedia.addEventListener("playing", controllerOnplaying);
+			controllerMedia.addEventListener("pause", controllerOnpause);
+			controllerMedia.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+			targetMedia.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+
+			// console.timeEnd("!! ignoreEventsAndPitstopResyncTime");
 		};
 
-		controllerVideo.addEventListener("playing", controllerOnplaying);
-		controllerVideo.addEventListener("pause", controllerOnpause);
-		controllerVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
-		targetVideo.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+		controllerMedia.addEventListener("playing", controllerOnplaying);
+		controllerMedia.addEventListener("pause", controllerOnpause);
+		controllerMedia.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
+		targetMedia.addEventListener("waiting", ignoreEventsAndPitstopResyncTime);
 
-		controllerVideo.addEventListener("seeked", () => {
+		controllerMedia.addEventListener("seeked", () => {
 			this.resyncTime();
 		});
 
-		controllerVideo.addEventListener("ratechange", () => {
+		controllerMedia.addEventListener("ratechange", () => {
 			this.resyncRate();
 		});
 
@@ -105,6 +124,7 @@ export default class Synchronizer {
 
 			if (Math.abs(targetVideoTimeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
 				await ignoreEventsAndPitstopResyncTime();
+				await this.playAllMedia(); // Ensures that the media is playing by the time the next iteration is called
 				return;
 			}
 
@@ -119,40 +139,40 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
-		targetVideo.addEventListener("playing", () => {
+		targetMedia.addEventListener("playing", () => {
 			animloop.start();
 		});
 
 		const targetAnimloopOnstop = () => {
 			animloop.stop();
 		};
-		targetVideo.addEventListener("pause", targetAnimloopOnstop);
-		targetVideo.addEventListener("waiting", targetAnimloopOnstop);
+		targetMedia.addEventListener("pause", targetAnimloopOnstop);
+		targetMedia.addEventListener("waiting", targetAnimloopOnstop);
+	}
+
+	pauseAllMedia() {
+		return Promise.all([
+			pauseMedia(this.controllerMedia),
+			pauseMedia(this.targetMedia),
+		]);
+	}
+
+	playAllMedia() {
+		return Promise.all([
+			playMedia(this.controllerMedia),
+			playMedia(this.targetMedia),
+		]);
 	}
 
 	resyncTime() {
-		this.targetVideo.currentTime = this.controllerVideo.currentTime + this.offsetTime;
+		this.targetMedia.currentTime = this.controllerMedia.currentTime + this.offsetTime;
 	}
 
 	resyncRate() {
-		this.targetVideo.playbackRate = clamp(this.controllerVideo.playbackRate * this.offsetRateFactor, MIN_SPEED, MAX_SPEED);
-	}
-
-	async pitstopResyncTime() {
-		await Promise.all([
-			pauseVideo(this.controllerVideo),
-			pauseVideo(this.targetVideo),
-		]);
-
-		this.resyncTime();
-
-		await Promise.all([
-			playVideo(this.controllerVideo),
-			playVideo(this.targetVideo),
-		]);
+		this.targetMedia.playbackRate = clamp(this.controllerMedia.playbackRate * this.offsetRateFactor, MIN_SPEED, MAX_SPEED);
 	}
 
 	targetVideoTimeDrift() {
-		return this.targetVideo.currentTime - this.controllerVideo.currentTime - this.offsetTime;
+		return this.targetMedia.currentTime - this.controllerMedia.currentTime - this.offsetTime;
 	}
 }
