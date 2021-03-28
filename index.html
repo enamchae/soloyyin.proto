@@ -81,14 +81,34 @@ const THRESHOLD_DB = -16;
 		},
 	});
 
-	// skupper.lookaheadMedia.controls = true;
-	// video.insertAdjacentElement("afterend", skupper.lookaheadMedia>);
+	skupper.lookaheadMedia.controls = true;
+	video.insertAdjacentElement("afterend", skupper.lookaheadMedia);
 
 	canvas.width = skupper.analyserBuffer.length;
 	canvas.height = 120;
 	canvasContext.scale(1, -canvas.height / 2);
 	canvasContext.translate(0, -1);
 	canvasContext.fillStyle = "#aaa";
+	
+	const logEvent = event => console.log(`%c${event.type}`, "color: blue; font-weight: 700;");
+
+	video.addEventListener("canplay", logEvent);
+	video.addEventListener("loadeddata", logEvent);
+	video.addEventListener("play", logEvent);
+	video.addEventListener("stalled", logEvent);
+	video.addEventListener("playing", logEvent);
+	video.addEventListener("pause", logEvent);
+	video.addEventListener("waiting", logEvent); 
+
+	const logEvent2 = event => console.log(`%c${event.type}`, "color: green;");
+
+	skupper.lookaheadMedia.addEventListener("canplay", logEvent2);
+	skupper.lookaheadMedia.addEventListener("loadeddata", logEvent2);
+	skupper.lookaheadMedia.addEventListener("play", logEvent2);
+	skupper.lookaheadMedia.addEventListener("stalled", logEvent2);
+	skupper.lookaheadMedia.addEventListener("playing", logEvent2);
+	skupper.lookaheadMedia.addEventListener("pause", logEvent2);
+	skupper.lookaheadMedia.addEventListener("waiting", logEvent2);
 
 /* 	//#region MinMaxer worklet
 

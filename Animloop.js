@@ -1,13 +1,13 @@
-const NOOP = () => {};
+const NOOP = async () => {};
 
 export default class Animloop {
-	animationFrameHandle = null;
+	animationFrameHandle = 0;
 
 	onAnimationFrame;
 	animationFrameCallback;
 
 	get stopped() {
-		return this.animationFrameHandle === null;
+		return this.animationFrameHandle === 0;
 	}
 
 	constructor(onAnimationFrame=NOOP) {
@@ -24,7 +24,7 @@ export default class Animloop {
 
 	stop() {
 		cancelAnimationFrame(this.animationFrameHandle);
-		this.animationFrameHandle = null;
+		this.animationFrameHandle = 0;
 	}
 
 	createAnimationFrameCallback() {

@@ -1,9 +1,10 @@
 import Animloop from "./Animloop.js";
 import Synchronizer from "./Synchronizer.js";
+import Medi from "./Medi.js";
 
 const createLookaheadMedia = media => {
 	const lookaheadMedia = document.createElement("video");
-	lookaheadMedia.src = media.src;
+	lookaheadMedia.src = media.currentSrc;
 	lookaheadMedia.preload = true;
 	return lookaheadMedia;
 };
@@ -60,7 +61,7 @@ export default class Skupper {
 
 
 		this.animloop = new Animloop(onAnimationFrame);
-		this.attachEvents(this.lookaheadMedia);
+		this.attachEvents(this.synchronizer.targetMedi);
 	}
 
 	static dbfsFromAmp(amp) {
@@ -80,40 +81,21 @@ export default class Skupper {
 		return this.maxAmpFromExtrema(Math.min(...this.analyserBuffer), Math.max(...this.analyserBuffer));
 	}
 
-	attachEvents(analysedMedia) {
-		const logEvent = event => console.log(event.type);
-
-		analysedMedia.addEventListener("canplay", logEvent);
-		analysedMedia.addEventListener("loadeddata", logEvent);
-		analysedMedia.addEventListener("play", logEvent);
-		analysedMedia.addEventListener("stalled", logEvent); 
-
-		const onstart = event => {
-			logEvent(event);
-	
+	attachEvents(analysedMedi) {
+		analysedMedi.on(Medi.PLAYBACK_START, event => {
 			if (this.audioContext.state === "suspended") {
 				this.audioContext.resume();
 			}
 	
 			this.animloop.start();
-		};
-
-		const onstop = event => {
-			logEvent(event);
-
+		});
+	
+		analysedMedi.on(Medi.PLAYBACK_STOP, event => {
 			if (this.audioContext.state === "running") {
 				this.audioContext.suspend();
 			}
 
 			this.animloop.stop();
-		};
-	
-		// The `playing` event fires when the media truly begins or resumes playing, and 
-		// `pause` and `waiting` fire when the media truly stops playing.
-
-		analysedMedia.addEventListener("playing", onstart);
-	
-		analysedMedia.addEventListener("pause", onstop);
-		analysedMedia.addEventListener("waiting", onstop);
+		});
 	}
 }
