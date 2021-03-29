@@ -1,4 +1,5 @@
 const dispatchEvent = (medi, eventType) => {
+	console.log(eventType, medi.media.attributes.getNamedItem("!!controller") ? 1 : 2);
 	medi.eventTarget.dispatchEvent(new CustomEvent(eventType, {
 		detail: {
 			media: medi.media,
@@ -25,14 +26,14 @@ export default class Medi {
 
 	static PLAY = "play";
 	static PAUSE = "pause";
-	/** Alias for `playing`.  */
+	/** Alias for `playing`. */
 	static PLAYBACK_START = "playing";
 	static WAITING = "waiting";
 
 	static RATECHANGE = "ratechange";
 	static SEEKING = "seeking";
 	
-	/** Fired when playback stops (captures both `pause` and `waiting`). */
+	/** Fired when playback stops (captures `pause` and usually `waiting`). */
 	static PLAYBACK_STOP = "stop";
 
 	eventTarget = new EventTarget();
@@ -130,21 +131,27 @@ export default class Medi {
 	async play() {
 		if (this.triggeringPlay) return;
 
+		console.log("\tstart PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
+
 		this.triggeringPlay = true;
 		await this.rawPlay();
 		this.triggeringPlay = false;
+
+		console.log("\tdone PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
 	}
 
 	async pause() {
 		if (this.triggeringPause) return;
 
-		console.log(this);
+		console.log("\tstart PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, new Error());
 
 		this.triggeringPlay = true;
 		this.triggeringPause = true;
 		await this.rawPause();
 		this.triggeringPlay = false;
 		this.triggeringPause = false;
+
+		console.log("\tdone PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, this.media.paused);
 	}
 
 	async seek(time) {
@@ -163,13 +170,22 @@ export default class Medi {
 		return this.media.play();
 	}
 
-	async rawPause() {
-		// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
-		// `play` will not have an effect on the current time[citation needed] unless the media has ended (in which case it will restart the media)
-		if (!this.media.ended) {
-			await this.media.play();
-		}
-		this.media.pause();
+	rawPause() {
+		return new Promise(async resolve => {
+			if (this.media.paused) return;
+	
+			// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
+			// `play` will not have an effect on the current time[citation needed] unless the media has ended (in which case it will restart the media)
+			if (!this.media.ended) {
+				await this.media.play();
+			}
+			
+			// `pause` event fires some time after calling `pause`
+			this.media.addEventListener("pause", () => {
+				resolve();
+			}, {once: true});
+			this.media.pause();
+		});
 	}
 
 	rawSeek(time) {

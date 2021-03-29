@@ -38,10 +38,12 @@ export default class Synchronizer {
 		});
 
 		this.controllerMedi.on(Medi.EXTERNAL_WAITING, () => {
+			console.log("external waiting event handler 1");
 			this.pitstopResyncTime();
 		});
 
 		this.targetMedi.on(Medi.EXTERNAL_WAITING, () => {
+			console.log("external waiting event handler 2");
 			this.pitstopResyncTime();
 		});
 
