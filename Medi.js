@@ -58,6 +58,10 @@ export default class Medi {
 		return this.media.playbackRate;
 	}
 
+	get paused() {
+		return this.media.paused;
+	}
+
 	constructor(media) {
 		this.media = media;
 
@@ -172,7 +176,10 @@ export default class Medi {
 
 	rawPause() {
 		return new Promise(async resolve => {
-			if (this.media.paused) return;
+			if (this.media.paused) {
+				resolve();
+				return;
+			}
 	
 			// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
 			// `play` will not have an effect on the current time[citation needed] unless the media has ended (in which case it will restart the media)
@@ -211,7 +218,7 @@ export default class Medi {
 	}
 
 	/**
-	 * Stifles external play events by pausing the video immediately.
+	 * Stifles external play events by pausing the media immediately.
 	 * @returns A function to disable the play stifler.
 	 */
 	stifleExternalPlay() {

@@ -2,7 +2,7 @@ import Animloop from "./Animloop.js";
 import Medi from "./Medi.js";
 
 const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.25;
-const MAX_ACCEPTABLE_TIME_DRIFT = 0.02; // s
+const BEGIN_CORRECTION_TIME_DRIFT = 0.02; // s
 const MAX_CORRECTABLE_TIME_DRIFT = 0.5; // s
 
 const MIN_SPEED = 1 / 16;
@@ -55,8 +55,6 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
-		// TODO target video will sometimes pause and not restart (`triggeringPlay` is `true` when `pause` is called on Medi)
-
 		const timeDriftAnimloop = new Animloop(async now => {
 			const targetVideoTimeDrift = this.targetVideoTimeDrift();
 
@@ -73,15 +71,15 @@ export default class Synchronizer {
 
 				// Prevents "race condition"
 				// TODO bleh
-				if (!this.targetMedi.triggeringPause && !this.targetMedi.media.paused) {
+				if (!this.targetMedi.triggeringPause && !this.targetMedi.paused) {
 					await this.pitstopResyncTime();
 				}
 				return;
 			}
 
-			if (targetVideoTimeDrift < -MAX_ACCEPTABLE_TIME_DRIFT) {
+			if (targetVideoTimeDrift < -BEGIN_CORRECTION_TIME_DRIFT) {
 				this.offsetRateFactor = TIME_DRIFT_CORRECTION_SPEED_FACTOR;
-			} else if (targetVideoTimeDrift > MAX_ACCEPTABLE_TIME_DRIFT) {
+			} else if (targetVideoTimeDrift > BEGIN_CORRECTION_TIME_DRIFT) {
 				this.offsetRateFactor = 1 / TIME_DRIFT_CORRECTION_SPEED_FACTOR;
 			} else {
 				this.offsetRateFactor = 1;
