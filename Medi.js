@@ -21,7 +21,9 @@ export default class Medi {
 	static EXTERNAL_PLAYBACK_START = "externalplaying";
 	static EXTERNAL_WAITING = "externalwaiting";
 
+	/** Like `EXTERNAL_PLAY`, but will fire regardless of whether external play is stifled. */
 	static STIFLABLE_EXTERNAL_PLAY = "stiflableexternalplay";
+	/** Like `EXTERNAL_PLAYBACK_START`, but will fire regardless of whether external play is stifled. */
 	static STIFLABLE_EXTERNAL_PLAYBACK_START = "stiflableexternalplaying";
 
 	static PLAY = "play";
@@ -182,10 +184,7 @@ export default class Medi {
 			}
 	
 			// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
-			// `play` will not have an effect on the current time[citation needed] unless the media has ended (in which case it will restart the media)
-			if (!this.media.ended) {
-				await this.media.play();
-			}
+			await this.media.play();
 			
 			// `pause` event fires some time after calling `pause`
 			this.media.addEventListener("pause", () => {
@@ -224,18 +223,18 @@ export default class Medi {
 	stifleExternalPlay() {
 		if (this.externalPlayStifled) throw new Error();
 
-		const playStifler = this.on(Medi.EXTERNAL_PLAY, async () => {
+		// `preventDefault` does nothing on `play` or `playing` events
+
+		const startTime = this.time;
+		const playStifler = this.on(Medi.STIFLABLE_EXTERNAL_PLAY, async () => {
 			await this.pause();
+			await this.seek(startTime);
 		});
 		this.externalPlayStifled = true;
-
-		// console.log("%c STIFLED!!!!", "color: red; font-weight: 700;");
 		
 		return () => {
-			this.off(Medi.EXTERNAL_PLAY, playStifler);
+			this.off(Medi.STIFLABLE_EXTERNAL_PLAY, playStifler);
 			this.externalPlayStifled = false;
-
-			// console.log("%c unstifled", "color: red; font-weight: 700;");
 		};
 	}
 }
