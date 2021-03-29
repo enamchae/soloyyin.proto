@@ -57,7 +57,7 @@ export default class Synchronizer {
 
 		// TODO target video will sometimes pause and not restart (`triggeringPlay` is `true` when `pause` is called on Medi)
 
-		const animloop = new Animloop(async now => {
+		const timeDriftAnimloop = new Animloop(async now => {
 			const targetVideoTimeDrift = this.targetVideoTimeDrift();
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next iteration.
@@ -70,7 +70,12 @@ export default class Synchronizer {
 
 			if (Math.abs(targetVideoTimeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
 				console.log("drift too big");
-				await this.pitstopResyncTime();
+
+				// Prevents "race condition"
+				// TODO bleh
+				if (!this.targetMedi.triggeringPause && !this.targetMedi.media.paused) {
+					await this.pitstopResyncTime();
+				}
 				return;
 			}
 
@@ -86,11 +91,11 @@ export default class Synchronizer {
 		});
 
 		this.targetMedi.on(Medi.PLAYBACK_START, () => {
-			animloop.start();
+			timeDriftAnimloop.start();
 		});
 
 		this.targetMedi.on(Medi.PLAYBACK_STOP, () => {
-			animloop.stop();
+			timeDriftAnimloop.stop();
 		});
 	}
 
