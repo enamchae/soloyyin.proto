@@ -1,4 +1,4 @@
-import Animloop from "./Animloop.js";
+import {Timeoutloop} from "./Looper.js";
 import Medi from "./Medi.js";
 
 const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.25;
@@ -55,7 +55,7 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
-		const timeDriftAnimloop = new Animloop(async now => {
+		const timeDriftLoop = new Timeoutloop(async now => {
 			const targetVideoTimeDrift = this.targetVideoTimeDrift();
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next iteration.
@@ -89,11 +89,11 @@ export default class Synchronizer {
 		});
 
 		this.targetMedi.on(Medi.PLAYBACK_START, () => {
-			timeDriftAnimloop.start();
+			timeDriftLoop.start();
 		});
 
 		this.targetMedi.on(Medi.PLAYBACK_STOP, () => {
-			timeDriftAnimloop.stop();
+			timeDriftLoop.stop();
 		});
 	}
 

@@ -59,23 +59,27 @@ const timeDriftDisplay = document.querySelector(".timedrift");
 const THRESHOLD_DB = -16;
 
 (async () => {
+	let cachedMaxDbfs = 0;
+
 	const skupper = new Skupper(video, {
 		lookbehindMargin: 0.5,
 		lookaheadMargin: 0.5,
 
-		onAnimationFrame: () => {
-			const maxDbfs = Skupper.dbfsFromAmp(skupper.maxAmpFromAnalyser());
-
-			dbDisplay.textContent = maxDbfs;
-			dbDisplay.classList.toggle("target", maxDbfs >= THRESHOLD_DB);
-
-			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift().toFixed(6);
+		onIteration: () => {
+			const maxDbfs = cachedMaxDbfs = Skupper.dbfsFromAmp(skupper.maxAmpFromAnalyser());
 
 			if (maxDbfs < THRESHOLD_DB) {
 				video.playbackRate = 4;
 			} else {
 				video.playbackRate = 1;
 			}
+		},
+
+		onAnimationFrame: () => {
+			dbDisplay.textContent = cachedMaxDbfs;
+			dbDisplay.classList.toggle("target", cachedMaxDbfs >= THRESHOLD_DB);
+
+			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift().toFixed(6);
 
 			drawTimeDomain(skupper.analyserBuffer);
 		},

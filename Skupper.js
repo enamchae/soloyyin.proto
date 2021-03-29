@@ -1,4 +1,4 @@
-import Animloop from "./Animloop.js";
+import {Animloop, Timeoutloop} from "./Looper.js";
 import Synchronizer from "./Synchronizer.js";
 import Medi from "./Medi.js";
 
@@ -35,12 +35,14 @@ export default class Skupper {
 	analyser;
 	analyserBuffer;
 
+	dbLoop;
 	animloop;
 
 	constructor(media, {
 		lookbehindMargin,
 		lookaheadMargin,
 
+		onIteration,
 		onAnimationFrame,
 	}={}) {
 		this.media = media;
@@ -60,6 +62,7 @@ export default class Skupper {
 		this.analyserBuffer = new Float32Array(analyser.fftSize);
 
 
+		this.dbLoop = new Timeoutloop(onIteration);
 		this.animloop = new Animloop(onAnimationFrame);
 		this.attachEvents(this.synchronizer.targetMedi);
 	}
@@ -87,6 +90,7 @@ export default class Skupper {
 				this.audioContext.resume();
 			}
 	
+			this.dbLoop.start();
 			this.animloop.start();
 		});
 	
@@ -95,6 +99,7 @@ export default class Skupper {
 				this.audioContext.suspend();
 			}
 
+			this.dbLoop.stop();
 			this.animloop.stop();
 		});
 	}
