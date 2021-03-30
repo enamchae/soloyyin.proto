@@ -52,6 +52,7 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 		super(workletNodeOptions);
 
 		const {sampleRate, historyDuration} = workletNodeOptions.processorOptions;
+		console.log(sampleRate, historyDuration);
 
 		this.sampleHistoryLength = sampleRate * historyDuration;
 

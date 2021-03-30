@@ -1,0 +1,85 @@
+export default class MinMaxerAnalyser {
+	media;
+
+	audioContext;
+
+	analyser;
+	analyserBuffer;
+
+	minMaxer;
+
+	static async new(media, {
+		lookaheadMargin,
+		lookbehindMargin,
+		sampleRate=44100,
+		fftSize=1024,
+	}={}) {
+		const audioContext = new AudioContext({sampleRate});
+		const audioSrc = new MediaElementAudioSourceNode(audioContext, {mediaElement: media});
+	
+		const analyser = new AnalyserNode(audioContext, {fftSize});
+	
+		await MinMaxerNode.registerWorkletModule(audioContext);
+		const minMaxer = new MinMaxerNode(audioContext, {
+			sampleRate: audioContext.sampleRate,
+			historyDuration: lookaheadMargin + lookbehindMargin,
+		});
+	
+		audioSrc.connect(analyser).connect(minMaxer);
+
+		return Object.assign(new MinMaxerAnalyser(), {
+			media,
+			audioContext,
+			analyser,
+			analyserBuffer: new Float32Array(analyser.fftSize),
+			minMaxer,
+		});
+	}
+
+	static dbfsFromAmp(amp) {
+		return 20 * Math.log10(amp);
+	}
+
+	static ampFromDbfs(dbfs) {
+		return 10 ** (dbfs / 20);
+	}
+
+	maxAmpFromExtrema(sampleMin, sampleMax) {
+		return (sampleMax - sampleMin) / 2 / this.media.volume;
+	}
+
+	maxAmpFromAnalyser() {
+		this.analyser.getFloatTimeDomainData(this.analyserBuffer);
+		return this.maxAmpFromExtrema(Math.min(...this.analyserBuffer), Math.max(...this.analyserBuffer));
+	}
+
+	async maxAmpFromMinMaxer() {
+		const {sampleMin, sampleMax} = await this.minMaxer.pollExtrema();
+		return this.mapAmpFromExtrema(sampleMin, sampleMax);
+	}
+}
+
+class MinMaxerNode extends AudioWorkletNode {
+	constructor(audioContext, {historyDuration=0}={}) {
+		super(audioContext, "min-maxer", {
+			processorOptions: {
+				sampleRate: audioContext.sampleRate,
+				historyDuration,
+			},
+		});
+	}
+
+	static registerWorkletModule(audioContext) {
+		return audioContext.audioWorklet.addModule("MinMaxer-audio-worklet.js");
+	}
+
+	pollExtrema() {
+		return new Promise(resolve => {
+			this.port.onmessage = event => {
+				resolve(event.data);
+			};
+
+			this.port.postMessage(null);
+		});
+	}
+}
