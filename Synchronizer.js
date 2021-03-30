@@ -2,7 +2,8 @@ import {Timeoutloop} from "./Looper.js";
 import Medi from "./Medi.js";
 
 const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.25;
-const BEGIN_CORRECTION_TIME_DRIFT = 0.02; // s
+const BEGIN_CORRECTION_TIME_DRIFT = 0.025; // s
+const END_CORRECTION_TIME_DRIFT = 0.01; // s
 const MAX_CORRECTABLE_TIME_DRIFT = 0.5; // s
 
 const MIN_SPEED = 1 / 16;
@@ -38,12 +39,12 @@ export default class Synchronizer {
 		});
 
 		this.controllerMedi.on(Medi.EXTERNAL_WAITING, () => {
-			console.log("external waiting event handler 1");
+			// console.log("external waiting event handler 1");
 			this.pitstopResyncTime();
 		});
 
 		this.targetMedi.on(Medi.EXTERNAL_WAITING, () => {
-			console.log("external waiting event handler 2");
+			// console.log("external waiting event handler 2");
 			this.pitstopResyncTime();
 		});
 
@@ -55,11 +56,20 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
+		let usingSpeedCorrection = false;
+		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;
+
 		const timeDriftLoop = new Timeoutloop(async now => {
+			// Prevents "race condition"
+			// TODO bleh
+			if (this.targetMedi.triggeringPause || this.targetMedi.paused) return;
+
 			const targetVideoTimeDrift = this.targetVideoTimeDrift();
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next iteration.
 			// Changing playback rate to many different values can cause slowdown.
+
+			// TODO when pausing, the time drift check may trigger the pause
 
 			// Edge condition (near end of video, when 1 video ends) is handled by the target video firing `pause`
 			// when ending.
@@ -67,22 +77,22 @@ export default class Synchronizer {
 			// console.log(targetVideoTimeDrift);
 
 			if (Math.abs(targetVideoTimeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
-				console.log("drift too big");
+				// console.log("drift too big");
 
-				// Prevents "race condition"
-				// TODO bleh
-				if (!this.targetMedi.triggeringPause && !this.targetMedi.paused) {
-					await this.pitstopResyncTime();
-				}
+				await this.pitstopResyncTime();
+				usingSpeedCorrection = false;
 				return;
 			}
 
-			if (targetVideoTimeDrift < -BEGIN_CORRECTION_TIME_DRIFT) {
+			if (targetVideoTimeDrift < -correctionThreshold()) {
 				this.offsetRateFactor = TIME_DRIFT_CORRECTION_SPEED_FACTOR;
-			} else if (targetVideoTimeDrift > BEGIN_CORRECTION_TIME_DRIFT) {
+				usingSpeedCorrection = true;
+			} else if (targetVideoTimeDrift > correctionThreshold()) {
 				this.offsetRateFactor = 1 / TIME_DRIFT_CORRECTION_SPEED_FACTOR;
+				usingSpeedCorrection = true;
 			} else {
 				this.offsetRateFactor = 1;
+				usingSpeedCorrection = false;
 			}
 
 			this.resyncRate();
@@ -94,6 +104,7 @@ export default class Synchronizer {
 
 		this.targetMedi.on(Medi.PLAYBACK_STOP, () => {
 			timeDriftLoop.stop();
+			usingSpeedCorrection = false;
 		});
 	}
 

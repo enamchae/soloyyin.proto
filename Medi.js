@@ -1,5 +1,5 @@
 const dispatchEvent = (medi, eventType) => {
-	console.log(eventType, medi.media.attributes.getNamedItem("!!controller") ? 1 : 2);
+	// console.log(eventType, medi.media.attributes.getNamedItem("!!controller") ? 1 : 2);
 	medi.eventTarget.dispatchEvent(new CustomEvent(eventType, {
 		detail: {
 			media: medi.media,
@@ -137,19 +137,19 @@ export default class Medi {
 	async play() {
 		if (this.triggeringPlay) return;
 
-		console.log("\tstart PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
+		// console.log("\tstart PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
 
 		this.triggeringPlay = true;
 		await this.rawPlay();
 		this.triggeringPlay = false;
 
-		console.log("\tdone PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
+		// console.log("\tdone PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
 	}
 
 	async pause() {
 		if (this.triggeringPause) return;
 
-		console.log("\tstart PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, new Error());
+		// console.log("\tstart PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, new Error());
 
 		this.triggeringPlay = true;
 		this.triggeringPause = true;
@@ -157,7 +157,7 @@ export default class Medi {
 		this.triggeringPlay = false;
 		this.triggeringPause = false;
 
-		console.log("\tdone PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, this.media.paused);
+		// console.log("\tdone PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, this.media.paused);
 	}
 
 	async seek(time) {
