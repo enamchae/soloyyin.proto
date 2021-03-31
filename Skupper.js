@@ -12,14 +12,11 @@ const createLookaheadMedia = media => {
 
 export default class Skupper {
 	media;
+
 	lookaheadMedia;
-	
 	synchronizer;
 
 	minMaxerAnalyser;
-
-	dbLoop;
-	animloop;
 
 	static async new(media, {
 		lookbehindMargin,
@@ -32,9 +29,7 @@ export default class Skupper {
 		const synchronizer = new Synchronizer(media, lookaheadMedia, lookaheadMargin);
 
 		const minMaxerAnalyser = await MinMaxerAnalyser.new(lookaheadMedia, {
-			lookaheadMargin,
-			lookbehindMargin,
-			sampleRate: 3000,
+			historyDuration: lookbehindMargin + lookaheadMargin,
 		});
 
 		const dbLoop = new Timeoutloop(onIteration);
@@ -64,8 +59,6 @@ export default class Skupper {
 			lookaheadMedia,
 			synchronizer,
 			minMaxerAnalyser,
-			dbLoop,
-			animloop,
 		});
 	}
 }

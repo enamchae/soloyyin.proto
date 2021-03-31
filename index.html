@@ -62,11 +62,11 @@ const THRESHOLD_DB = -16;
 	let cachedMaxDbfs = 0;
 
 	const skupper = await Skupper.new(video, {
-		lookbehindMargin: 0.5,
-		lookaheadMargin: 0.5,
+		lookbehindMargin: 0.25,
+		lookaheadMargin: 0.25,
 
-		onIteration: () => {
-			const maxDbfs = cachedMaxDbfs = MinMaxerAnalyser.dbfsFromAmp(skupper.minMaxerAnalyser.maxAmpFromAnalyser());
+		onIteration: async () => {
+			const maxDbfs = cachedMaxDbfs = MinMaxerAnalyser.dbfsFromAmp(await skupper.minMaxerAnalyser.maxAmpFromMinMaxer());
 
 			if (maxDbfs < THRESHOLD_DB) {
 				video.playbackRate = 4;
@@ -87,10 +87,6 @@ const THRESHOLD_DB = -16;
 
 	skupper.lookaheadMedia.controls = true;
 	video.insertAdjacentElement("afterend", skupper.lookaheadMedia);
-
-	// setInterval(async () => {
-	// 	console.log(await skupper.minMaxer.pollExtrema());
-	// }, 2000);
 
 	canvas.width = skupper.minMaxerAnalyser.analyserBuffer.length;
 	canvas.height = 120;

@@ -1,5 +1,20 @@
 import RollingF32Array from "./RollingArray.js";
 
+const takeStep = function* (iterable, step=1) {
+	const generator = iterable[Symbol.iterator]();
+	let i = 0;
+	while (true) {
+		const {done, value} = generator.next();
+		if (done) break;
+
+		if (i % step === 0) {
+			yield value;
+		}
+
+		i++;
+	}
+};
+
 // Separation of concerns
 class MinMaxerRollingArray extends RollingF32Array {
 	lastPolledIndex = -1;
@@ -36,25 +51,21 @@ class MinMaxerRollingArray extends RollingF32Array {
 }
 
 class MinMaxerProcessor extends AudioWorkletProcessor {
-	// sampleHistoryQueue;
-
 	sampleHistoryLength;
+	sampleStepSize;
 	/** @type MinMaxerRollingArray[] */
 	sampleHistory = null;
 
-	// latestInputs;
-
-/* 	minMaxComputed = false;
-	sampleMin = NaN;
-	sampleMax = NaN; */
-
 	constructor(workletNodeOptions) {
+		workletNodeOptions.numberOfInputs = 1;
+		workletNodeOptions.numberOfOutputs = 0;
 		super(workletNodeOptions);
 
-		const {sampleRate, historyDuration} = workletNodeOptions.processorOptions;
-		console.log(sampleRate, historyDuration);
+		const {sampleRate, historyDuration, sampleStepSize} = workletNodeOptions.processorOptions;
 
-		this.sampleHistoryLength = sampleRate * historyDuration;
+		// Length might be inaccurate (sample skipping is done on individual processing chunks)
+		this.sampleHistoryLength = Math.ceil((sampleRate * historyDuration) / sampleStepSize);
+		this.sampleStepSize = sampleStepSize;
 
 		// this.sampleHistoryQueue = new RollingQueue(this.historyDuration * this.sampleRate);
 
@@ -83,15 +94,12 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 
 	pushToSampleHistory(inputChannels) {
 		inputChannels.forEach((channelSamples, i) => {
-			this.sampleHistory[i].push(...channelSamples);
+			this.sampleHistory[i].push(...takeStep(channelSamples, this.sampleStepSize));
 		});
 	}
 
 	process(inputs, outputs, parameters) {
-/* 		this.latestInputs = inputs;
-		this.uncacheMinMax(); */
-
- 		const outputChannels = outputs[0];
+ 		// const outputChannels = outputs[0];
 		const inputChannels = inputs[0];
 
 		if (this.sampleHistoryUnready) {
@@ -99,33 +107,14 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 		}
 		this.pushToSampleHistory(inputChannels);
 
-		outputChannels.forEach((outputChannel, i) => {
+/* 		outputChannels.forEach((outputChannel, i) => {
 			const inputChannel = inputChannels[i];
 
 			Object.assign(outputChannel, inputChannel);
-		});
+		}); */
 
 		return true;
 	}
-
-/* 	uncacheMinMax() {
-		if (this.minMaxComputed) {
-			this.minMaxComputed = false;
-			this.sampleMin = NaN;
-			this.sampleMax = NaN;
-		}
-	}
-
-	computeMinMax() {
-		// Currently handles first channel only
-		const inputChannel = this.latestInputs?.[0][0];
-
-		if (inputChannel) {
-			this.sampleMax = Math.max(...inputChannel);
-			this.sampleMin = Math.min(...inputChannel);
-		}
-		this.minMaxComputed = true;
-	} */
 }
 
 registerProcessor("min-maxer", MinMaxerProcessor);

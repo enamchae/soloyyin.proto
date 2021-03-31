@@ -9,10 +9,10 @@ export default class MinMaxerAnalyser {
 	minMaxer;
 
 	static async new(media, {
-		lookaheadMargin,
-		lookbehindMargin,
-		sampleRate=44100,
+		sampleRate=44100, // Very low sample rates may lag at high speeds
 		fftSize=1024,
+		historyDuration,
+		sampleStepSize=16,
 	}={}) {
 		const audioContext = new AudioContext({sampleRate});
 		const audioSrc = new MediaElementAudioSourceNode(audioContext, {mediaElement: media});
@@ -21,8 +21,9 @@ export default class MinMaxerAnalyser {
 	
 		await MinMaxerNode.registerWorkletModule(audioContext);
 		const minMaxer = new MinMaxerNode(audioContext, {
-			sampleRate: audioContext.sampleRate,
-			historyDuration: lookaheadMargin + lookbehindMargin,
+			sampleRate,
+			historyDuration,
+			sampleStepSize,
 		});
 	
 		audioSrc.connect(analyser).connect(minMaxer);
@@ -55,17 +56,14 @@ export default class MinMaxerAnalyser {
 
 	async maxAmpFromMinMaxer() {
 		const {sampleMin, sampleMax} = await this.minMaxer.pollExtrema();
-		return this.mapAmpFromExtrema(sampleMin, sampleMax);
+		return this.maxAmpFromExtrema(sampleMin, sampleMax);
 	}
 }
 
 class MinMaxerNode extends AudioWorkletNode {
-	constructor(audioContext, {historyDuration=0}={}) {
+	constructor(audioContext, processorOptions) {
 		super(audioContext, "min-maxer", {
-			processorOptions: {
-				sampleRate: audioContext.sampleRate,
-				historyDuration,
-			},
+			processorOptions,
 		});
 	}
 
