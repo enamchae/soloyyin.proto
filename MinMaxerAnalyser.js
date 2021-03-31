@@ -65,6 +65,8 @@ class MinMaxerNode extends AudioWorkletNode {
 		super(audioContext, "min-maxer", {
 			processorOptions,
 		});
+
+		this.port.start();
 	}
 
 	static registerWorkletModule(audioContext) {
@@ -73,9 +75,9 @@ class MinMaxerNode extends AudioWorkletNode {
 
 	pollExtrema() {
 		return new Promise(resolve => {
-			this.port.onmessage = event => {
+			this.port.addEventListener("message", event => {
 				resolve(event.data);
-			};
+			}, {once: true});
 
 			this.port.postMessage(null);
 		});

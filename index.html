@@ -62,8 +62,8 @@ const THRESHOLD_DB = -16;
 	let cachedMaxDbfs = 0;
 
 	const skupper = await Skupper.new(video, {
-		lookbehindMargin: 0.25,
-		lookaheadMargin: 0.25,
+		lookbehindMargin: 0.5,
+		lookaheadMargin: 0.5,
 
 		onIteration: async () => {
 			const maxDbfs = cachedMaxDbfs = MinMaxerAnalyser.dbfsFromAmp(await skupper.minMaxerAnalyser.maxAmpFromMinMaxer());

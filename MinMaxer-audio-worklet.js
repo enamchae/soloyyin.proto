@@ -1,12 +1,8 @@
 import RollingF32Array from "./RollingArray.js";
 
 const takeStep = function* (iterable, step=1) {
-	const generator = iterable[Symbol.iterator]();
 	let i = 0;
-	while (true) {
-		const {done, value} = generator.next();
-		if (done) break;
-
+	for (const value of iterable) {
 		if (i % step === 0) {
 			yield value;
 		}
@@ -51,10 +47,10 @@ class MinMaxerRollingArray extends RollingF32Array {
 }
 
 class MinMaxerProcessor extends AudioWorkletProcessor {
+	sampleHistory;
 	sampleHistoryLength;
 	sampleStepSize;
-	/** @type MinMaxerRollingArray[] */
-	sampleHistory = null;
+	// nChannels = -1;
 
 	constructor(workletNodeOptions) {
 		workletNodeOptions.numberOfInputs = 1;
@@ -66,46 +62,41 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 		// Length might be inaccurate (sample skipping is done on individual processing chunks)
 		this.sampleHistoryLength = Math.ceil((sampleRate * historyDuration) / sampleStepSize);
 		this.sampleStepSize = sampleStepSize;
-
-		// this.sampleHistoryQueue = new RollingQueue(this.historyDuration * this.sampleRate);
+		
+		this.sampleHistory = new MinMaxerRollingArray(this.sampleHistoryLength);
 
 		this.port.onmessage = event => {
-/* 			if (!this.minMaxComputed) {
-				this.computeMinMax();
-			} */
+			const sampleExtremes = this.sampleHistory.computeMinMax() ?? {sampleMin: NaN, sampleMax: NaN};
 
-			// TODO temp [0]
-			const sampleExtremes = this.sampleHistory?.[0].computeMinMax() ?? {sampleMin: NaN, sampleMax: NaN};
-
-			this.port.postMessage({
-				...sampleExtremes,
-				...event.data,
-			});
+			this.port.postMessage(sampleExtremes);
 		};
 	}
 
-	get sampleHistoryUnready() {
+/* 	get sampleHistoryUnready() {
 		return this.sampleHistory === null;
 	}
 
-	initSampleHistory(inputChannels) {
-		this.sampleHistory = inputChannels.map(() => new MinMaxerRollingArray(this.sampleHistoryLength));
-	}
+	initSampleHistory() {
+		this.sampleHistory = new MinMaxerRollingArray(this.sampleHistoryLength);
+	} */
 
 	pushToSampleHistory(inputChannels) {
-		inputChannels.forEach((channelSamples, i) => {
+		// temp [0]
+		this.sampleHistory.push(...takeStep(inputChannels[0], this.sampleStepSize));
+/* 		inputChannels.forEach((channelSamples, i) => {
 			this.sampleHistory[i].push(...takeStep(channelSamples, this.sampleStepSize));
-		});
+		}); */
 	}
 
 	process(inputs, outputs, parameters) {
  		// const outputChannels = outputs[0];
 		const inputChannels = inputs[0];
 
-		if (this.sampleHistoryUnready) {
-			this.initSampleHistory(inputChannels);
-		}
+/* 		if (this.sampleHistoryUnready) {
+			this.initSampleHistory();
+		} */
 		this.pushToSampleHistory(inputChannels);
+		// this.nChannels = inputChannels.length;
 
 /* 		outputChannels.forEach((outputChannel, i) => {
 			const inputChannel = inputChannels[i];
