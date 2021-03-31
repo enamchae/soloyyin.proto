@@ -1,4 +1,4 @@
-import {Timeoutloop} from "./Looper.js";
+import {TimeoutLoop} from "./Looper.js";
 import Medi from "./Medi.js";
 
 const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.25;
@@ -59,12 +59,12 @@ export default class Synchronizer {
 		let usingSpeedCorrection = false;
 		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;
 
-		const timeDriftLoop = new Timeoutloop(async now => {
+		const timeDriftLoop = new TimeoutLoop(async now => {
 			// Prevents "race condition"
 			// TODO bleh
 			if (this.targetMedi.triggeringPause || this.targetMedi.paused) return;
 
-			const targetVideoTimeDrift = this.targetVideoTimeDrift();
+			const timeDrift = this.targetMediaTimeDrift();
 
 			// TODO inconsistent. Current settings may cause target media to overshoot by next iteration.
 			// Changing playback rate to many different values can cause slowdown.
@@ -76,7 +76,7 @@ export default class Synchronizer {
 
 			// console.log(targetVideoTimeDrift);
 
-			if (Math.abs(targetVideoTimeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
+			if (Math.abs(timeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
 				// console.log("drift too big");
 
 				await this.pitstopResyncTime();
@@ -84,10 +84,10 @@ export default class Synchronizer {
 				return;
 			}
 
-			if (targetVideoTimeDrift < -correctionThreshold()) {
+			if (timeDrift < -correctionThreshold()) {
 				this.offsetRateFactor = TIME_DRIFT_CORRECTION_SPEED_FACTOR;
 				usingSpeedCorrection = true;
-			} else if (targetVideoTimeDrift > correctionThreshold()) {
+			} else if (timeDrift > correctionThreshold()) {
 				this.offsetRateFactor = 1 / TIME_DRIFT_CORRECTION_SPEED_FACTOR;
 				usingSpeedCorrection = true;
 			} else {
@@ -147,7 +147,7 @@ export default class Synchronizer {
 		return this.targetMedi.accel(clamp(this.controllerMedi.rate * this.offsetRateFactor, MIN_SPEED, MAX_SPEED));
 	}
 
-	targetVideoTimeDrift() {
+	targetMediaTimeDrift() {
 		return this.targetMedi.time - this.controllerMedi.time - this.offsetTime;
 	}
 }

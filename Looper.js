@@ -29,7 +29,7 @@ class Looper {
 	}
 }
 
-export class Animloop extends Looper {
+export class AnimLoop extends Looper {
 	start() {
 		if (!this.stopped) return;
 
@@ -51,7 +51,7 @@ export class Animloop extends Looper {
 	}
 }
 
-export class Timeoutloop extends Looper {
+export class TimeoutLoop extends Looper {
 	start() {
 		if (!this.stopped) return;
 

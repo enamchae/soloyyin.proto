@@ -1,4 +1,4 @@
-export default class MinMaxerAnalyser {
+export default class ExtremaAnalyser {
 	media;
 
 	audioContext;
@@ -6,7 +6,7 @@ export default class MinMaxerAnalyser {
 	analyser;
 	analyserBuffer;
 
-	minMaxer;
+	extremizer;
 
 	static async new(media, {
 		sampleRate=44100, // Very low sample rates may lag at high speeds
@@ -19,21 +19,21 @@ export default class MinMaxerAnalyser {
 	
 		const analyser = new AnalyserNode(audioContext, {fftSize});
 	
-		await MinMaxerNode.registerWorkletModule(audioContext);
-		const minMaxer = new MinMaxerNode(audioContext, {
+		await ExtremizerNode.registerWorkletModule(audioContext);
+		const extremizer = new ExtremizerNode(audioContext, {
 			sampleRate,
 			historyDuration,
 			sampleStepSize,
 		});
 	
-		audioSrc.connect(analyser).connect(minMaxer);
+		audioSrc.connect(analyser).connect(extremizer);
 
-		return Object.assign(new MinMaxerAnalyser(), {
+		return Object.assign(new ExtremaAnalyser(), {
 			media,
 			audioContext,
 			analyser,
 			analyserBuffer: new Float32Array(analyser.fftSize),
-			minMaxer,
+			extremizer,
 		});
 	}
 
@@ -54,15 +54,15 @@ export default class MinMaxerAnalyser {
 		return this.maxAmpFromExtrema(Math.min(...this.analyserBuffer), Math.max(...this.analyserBuffer));
 	}
 
-	async maxAmpFromMinMaxer() {
-		const {sampleMin, sampleMax} = await this.minMaxer.pollExtrema();
+	async maxAmpFromExtremizer() {
+		const {sampleMin, sampleMax} = await this.extremizer.pollExtrema();
 		return this.maxAmpFromExtrema(sampleMin, sampleMax);
 	}
 }
 
-class MinMaxerNode extends AudioWorkletNode {
+class ExtremizerNode extends AudioWorkletNode {
 	constructor(audioContext, processorOptions) {
-		super(audioContext, "min-maxer", {
+		super(audioContext, "extremizer", {
 			processorOptions,
 		});
 
@@ -70,7 +70,7 @@ class MinMaxerNode extends AudioWorkletNode {
 	}
 
 	static registerWorkletModule(audioContext) {
-		return audioContext.audioWorklet.addModule("MinMaxer-audio-worklet.js");
+		return audioContext.audioWorklet.addModule("Extremizer-audioworklet.js");
 	}
 
 	pollExtrema() {

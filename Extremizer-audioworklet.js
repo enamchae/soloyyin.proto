@@ -12,7 +12,7 @@ const takeStep = function* (iterable, step=1) {
 };
 
 // Separation of concerns
-class MinMaxerRollingArray extends RollingF32Array {
+class ExtremizerRollingArray extends RollingF32Array {
 	lastPolledIndex = -1;
 
 	sampleMin = NaN;
@@ -22,7 +22,7 @@ class MinMaxerRollingArray extends RollingF32Array {
 	sampleMaxAbsIndex = -1;
 
 	// unoptimized
-	computeMinMax() {
+	computeExtrema() {
 		const sampleMin = this.sampleMinAbsIndex === -1
 				? Math.min(...this.pushloadValues())
 				: this.sampleMin;
@@ -46,7 +46,7 @@ class MinMaxerRollingArray extends RollingF32Array {
 	} */
 }
 
-class MinMaxerProcessor extends AudioWorkletProcessor {
+class ExtremizerProcessor extends AudioWorkletProcessor {
 	sampleHistory;
 	sampleHistoryLength;
 	sampleStepSize;
@@ -63,12 +63,12 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 		this.sampleHistoryLength = Math.ceil((sampleRate * historyDuration) / sampleStepSize);
 		this.sampleStepSize = sampleStepSize;
 		
-		this.sampleHistory = new MinMaxerRollingArray(this.sampleHistoryLength);
+		this.sampleHistory = new ExtremizerRollingArray(this.sampleHistoryLength);
 
 		this.port.onmessage = event => {
-			const sampleExtremes = this.sampleHistory.computeMinMax() ?? {sampleMin: NaN, sampleMax: NaN};
+			const sampleExtrema = this.sampleHistory.computeExtrema() ?? {sampleMin: NaN, sampleMax: NaN};
 
-			this.port.postMessage(sampleExtremes);
+			this.port.postMessage(sampleExtrema);
 		};
 	}
 
@@ -77,7 +77,7 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 	}
 
 	initSampleHistory() {
-		this.sampleHistory = new MinMaxerRollingArray(this.sampleHistoryLength);
+		this.sampleHistory = new ExtremizerRollingArray(this.sampleHistoryLength);
 	} */
 
 	pushToSampleHistory(inputChannels) {
@@ -108,4 +108,4 @@ class MinMaxerProcessor extends AudioWorkletProcessor {
 	}
 }
 
-registerProcessor("min-maxer", MinMaxerProcessor);
+registerProcessor("extremizer", ExtremizerProcessor);

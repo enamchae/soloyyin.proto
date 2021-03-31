@@ -30,8 +30,8 @@
 		<div class="timedrift">._.</div>
 
 		<script type="module">
-import Skupper from "./Skupper.js";
-import MinMaxerAnalyser from "./MinMaxerAnalyser.js";
+import Soloyyin from "./Soloyyin.js";
+import ExtremaAnalyser from "./ExtremaAnalyser.js";
 
 document.querySelector(".debugger").addEventListener("click", () => {
 	debugger;
@@ -61,12 +61,12 @@ const THRESHOLD_DB = -16;
 (async () => {
 	let cachedMaxDbfs = 0;
 
-	const skupper = await Skupper.new(video, {
+	const soloyyin = await Soloyyin.new(video, {
 		lookbehindMargin: 0.5,
 		lookaheadMargin: 0.5,
 
 		onIteration: async () => {
-			const maxDbfs = cachedMaxDbfs = MinMaxerAnalyser.dbfsFromAmp(await skupper.minMaxerAnalyser.maxAmpFromMinMaxer());
+			const maxDbfs = cachedMaxDbfs = ExtremaAnalyser.dbfsFromAmp(await soloyyin.extremaAnalyser.maxAmpFromExtremizer());
 
 			if (maxDbfs < THRESHOLD_DB) {
 				video.playbackRate = 4;
@@ -79,16 +79,16 @@ const THRESHOLD_DB = -16;
 			dbDisplay.textContent = cachedMaxDbfs;
 			dbDisplay.classList.toggle("target", cachedMaxDbfs >= THRESHOLD_DB);
 
-			timeDriftDisplay.textContent = skupper.synchronizer.targetVideoTimeDrift().toFixed(6);
+			timeDriftDisplay.textContent = soloyyin.synchronizer.targetMediaTimeDrift().toFixed(6);
 
-			drawTimeDomain(skupper.minMaxerAnalyser.analyserBuffer);
+			drawTimeDomain(soloyyin.extremaAnalyser.analyserBuffer);
 		},
 	});
 
-	skupper.lookaheadMedia.controls = true;
-	video.insertAdjacentElement("afterend", skupper.lookaheadMedia);
+	soloyyin.lookaheadMedia.controls = true;
+	video.insertAdjacentElement("afterend", soloyyin.lookaheadMedia);
 
-	canvas.width = skupper.minMaxerAnalyser.analyserBuffer.length;
+	canvas.width = soloyyin.extremaAnalyser.analyserBuffer.length;
 	canvas.height = 120;
 	canvasContext.scale(1, -canvas.height / 2);
 	canvasContext.translate(0, -1);
@@ -106,13 +106,13 @@ const THRESHOLD_DB = -16;
 
 	const logEvent2 = event => console.log(`%c${event.type}`, "color: green;");
 
-	skupper.lookaheadMedia.addEventListener("canplay", logEvent2);
-	skupper.lookaheadMedia.addEventListener("loadeddata", logEvent2);
-	skupper.lookaheadMedia.addEventListener("play", logEvent2);
-	skupper.lookaheadMedia.addEventListener("stalled", logEvent2);
-	skupper.lookaheadMedia.addEventListener("playing", logEvent2);
-	skupper.lookaheadMedia.addEventListener("pause", logEvent2);
-	skupper.lookaheadMedia.addEventListener("waiting", logEvent2); */
+	soloyyin.lookaheadMedia.addEventListener("canplay", logEvent2);
+	soloyyin.lookaheadMedia.addEventListener("loadeddata", logEvent2);
+	soloyyin.lookaheadMedia.addEventListener("play", logEvent2);
+	soloyyin.lookaheadMedia.addEventListener("stalled", logEvent2);
+	soloyyin.lookaheadMedia.addEventListener("playing", logEvent2);
+	soloyyin.lookaheadMedia.addEventListener("pause", logEvent2);
+	soloyyin.lookaheadMedia.addEventListener("waiting", logEvent2); */
 })();
 		</script>
 	</body>
