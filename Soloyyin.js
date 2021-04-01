@@ -5,7 +5,7 @@ import ExtremaAnalyser from "./ExtremaAnalyser.js";
 
 const createLookaheadMedia = media => {
 	const lookaheadMedia = document.createElement("video");
-	lookaheadMedia.src = media.currentSrc;
+	lookaheadMedia.src = media.currentSrc + "1";
 	lookaheadMedia.preload = true;
 	return lookaheadMedia;
 };
@@ -18,7 +18,7 @@ export default class Soloyyin {
 
 	extremaAnalyser;
 
-	static async new(media, {
+	static async construct(media, {
 		lookbehindMargin,
 		lookaheadMargin,
 
@@ -28,30 +28,30 @@ export default class Soloyyin {
 		const lookaheadMedia = createLookaheadMedia(media);
 		const synchronizer = new Synchronizer(media, lookaheadMedia, lookaheadMargin);
 
-		const extremaAnalyser = await ExtremaAnalyser.new(lookaheadMedia, {
+		const extremaAnalyser = await ExtremaAnalyser.construct(lookaheadMedia, {
 			historyDuration: lookbehindMargin + lookaheadMargin,
 		});
 
 		const dbLoop = new TimeoutLoop(onIteration);
-		const animloop = new AnimLoop(onAnimationFrame);
+		const animLoop = new AnimLoop(onAnimationFrame);
 		
-		const targetMedi = synchronizer.targetMedi;
-		targetMedi.on(Medi.PLAYBACK_START, event => {
+		const lookaheadMedi = synchronizer.targetMedi;
+		lookaheadMedi.on(Medi.PLAYBACK_START, event => {
 			if (extremaAnalyser.audioContext.state === "suspended") {
 				extremaAnalyser.audioContext.resume();
 			}
 	
 			dbLoop.start();
-			animloop.start();
+			animLoop.start();
 		});
 	
-		targetMedi.on(Medi.PLAYBACK_STOP, event => {
+		lookaheadMedi.on(Medi.PLAYBACK_STOP, event => {
 			if (extremaAnalyser.audioContext.state === "running") {
 				extremaAnalyser.audioContext.suspend();
 			}
 
 			dbLoop.stop();
-			animloop.stop();
+			animLoop.stop();
 		});
 
 		return Object.assign(new Soloyyin(), {

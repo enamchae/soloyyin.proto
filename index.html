@@ -61,7 +61,7 @@ const THRESHOLD_DB = -16;
 (async () => {
 	let cachedMaxDbfs = 0;
 
-	const soloyyin = await Soloyyin.new(video, {
+	const soloyyin = await Soloyyin.construct(video, {
 		lookbehindMargin: 0.5,
 		lookaheadMargin: 0.5,
 

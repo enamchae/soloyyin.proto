@@ -8,7 +8,7 @@ export default class ExtremaAnalyser {
 
 	extremizer;
 
-	static async new(media, {
+	static async construct(media, {
 		sampleRate=44100, // Very low sample rates may lag at high speeds
 		fftSize=1024,
 		historyDuration,
@@ -17,9 +17,9 @@ export default class ExtremaAnalyser {
 		const audioContext = new AudioContext({sampleRate});
 		const audioSrc = new MediaElementAudioSourceNode(audioContext, {mediaElement: media});
 	
+		await ExtremizerNode.addToContext(audioContext);
 		const analyser = new AnalyserNode(audioContext, {fftSize});
-	
-		await ExtremizerNode.registerWorkletModule(audioContext);
+
 		const extremizer = new ExtremizerNode(audioContext, {
 			sampleRate,
 			historyDuration,
@@ -69,7 +69,7 @@ class ExtremizerNode extends AudioWorkletNode {
 		this.port.start();
 	}
 
-	static registerWorkletModule(audioContext) {
+	static addToContext(audioContext) {
 		return audioContext.audioWorklet.addModule("Extremizer-audioworklet.js");
 	}
 

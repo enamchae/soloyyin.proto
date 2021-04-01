@@ -28,15 +28,17 @@ export default class Medi {
 
 	static PLAY = "play";
 	static PAUSE = "pause";
-	/** Alias for `playing`. */
-	static PLAYBACK_START = "playing";
 	static WAITING = "waiting";
 
 	static RATECHANGE = "ratechange";
 	static SEEKING = "seeking";
 	
+	/** Alias for `playing`. */
+	static PLAYBACK_START = "playing";
 	/** Fired when playback stops (captures `pause` and usually `waiting`). */
 	static PLAYBACK_STOP = "stop";
+
+	static LOAD_START = "loadstart";
 
 	eventTarget = new EventTarget();
 	media;
@@ -62,6 +64,10 @@ export default class Medi {
 
 	get paused() {
 		return this.media.paused;
+	}
+
+	get loaded() {
+		return this.media.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 	}
 
 	constructor(media) {
@@ -132,6 +138,10 @@ export default class Medi {
 		this.media.addEventListener("seeking", event => {
 			dispatchEvent(this, Medi.SEEKING);
 		});
+
+		this.media.addEventListener("loadstart", event => {
+			dispatchEvent(this, Medi.LOAD_START);
+		});
 	}
 
 	async play() {
@@ -170,6 +180,13 @@ export default class Medi {
 
 	async accel(rate) {
 		this.media.playbackRate = rate;
+	}
+
+	continueLoad() {
+		if (!this.loaded) {
+			this.media.load();
+		}
+		return this.untilLoaded();
 	}
 
 	rawPlay() {
@@ -216,6 +233,34 @@ export default class Medi {
 		this.eventTarget.removeEventListener(eventType, handler);
 	}
 
+	untilLoaded() {
+		return new Promise((resolve, reject) => {
+			if (this.loaded) {
+				resolve();
+				return;
+			}
+
+			if (this.media.error) {
+				reject(this.media.error);
+				return;
+			}
+
+			const onsuccess = () => {
+				this.media.removeEventListener("error", onfailure, {once: true});
+				resolve();
+			};
+
+			const onfailure = () => {
+				this.media.removeEventListener("loadeddata", onsuccess, {once: true});
+				reject(this.media.error);
+			};
+
+			this.media.addEventListener("loadeddata", onsuccess, {once: true});
+
+			this.media.addEventListener("error", onfailure, {once: true});
+		});
+	}
+
 	/**
 	 * Stifles external play events by pausing the media immediately.
 	 * @returns A function to disable the play stifler.
@@ -232,7 +277,11 @@ export default class Medi {
 		});
 		this.externalPlayStifled = true;
 		
+		let tried = false;
 		return () => {
+			if (tried) return;
+			tried = true;
+
 			this.off(Medi.STIFLABLE_EXTERNAL_PLAY, playStifler);
 			this.externalPlayStifled = false;
 		};
@@ -242,7 +291,7 @@ export default class Medi {
 /**
  * @enum
  */
- const MediaState = Object.freeze(class MediaState {
+const MediaState = Object.freeze(class MediaState {
 	static PAUSED = new MediaState({paused: true, playbackStarted: false});
 	static PLAYBACK_STOPPED = new MediaState({paused: false, playbackStarted: false});
 	static PLAYBACK_STARTED = new MediaState({paused: false, playbackStarted: true});

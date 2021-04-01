@@ -18,8 +18,6 @@ export default class Synchronizer {
 	offsetTime;
 	offsetRateFactor = 1;
 
-	// TODO very long constructor
-
 	constructor(controllerMedia, targetMedia, offsetTime=0) {
 		this.controllerMedi = new Medi(controllerMedia);
 		this.targetMedi = new Medi(targetMedia);
@@ -39,12 +37,10 @@ export default class Synchronizer {
 		});
 
 		this.controllerMedi.on(Medi.EXTERNAL_WAITING, () => {
-			// console.log("external waiting event handler 1");
 			this.pitstopResyncTime();
 		});
 
 		this.targetMedi.on(Medi.EXTERNAL_WAITING, () => {
-			// console.log("external waiting event handler 2");
 			this.pitstopResyncTime();
 		});
 
@@ -58,7 +54,6 @@ export default class Synchronizer {
 
 		let usingSpeedCorrection = false;
 		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;
-
 		const timeDriftLoop = new TimeoutLoop(async now => {
 			// Prevents "race condition"
 			// TODO bleh
@@ -69,12 +64,10 @@ export default class Synchronizer {
 			// TODO inconsistent. Current settings may cause target media to overshoot by next iteration.
 			// Changing playback rate to many different values can cause slowdown.
 
-			// TODO when pausing, the time drift check may trigger the pause
+			// TODO when seeking, the time drift check may trigger the pause
 
 			// Edge condition (near end of video, when 1 video ends) is handled by the target video firing `pause`
 			// when ending.
-
-			// console.log(targetVideoTimeDrift);
 
 			if (Math.abs(timeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
 				// console.log("drift too big");
@@ -106,6 +99,15 @@ export default class Synchronizer {
 			timeDriftLoop.stop();
 			usingSpeedCorrection = false;
 		});
+
+		// TODO synchronzier handlers should not run if target is unloaded
+		const reenable = this.stifleExternalPlayAllMedia();
+		Promise.all([
+			this.controllerMedi.continueLoad(),
+			this.targetMedi.continueLoad(),
+		]).finally(() => {
+			reenable();
+		});
 	}
 
 	pauseAllMedia() {
@@ -123,20 +125,24 @@ export default class Synchronizer {
 	}
 
 	stifleExternalPlayAllMedia() {
-		return [
+		const reenablers = [
 			this.controllerMedi.stifleExternalPlay(),
 			this.targetMedi.stifleExternalPlay(),
 		];
+
+		return () => {
+			reenablers.map(reenable => reenable());
+		};
 	}
 
 	async pitstopResyncTime() {
-		const reenablers = this.stifleExternalPlayAllMedia();
+		const reenable = this.stifleExternalPlayAllMedia();
 
 		await this.pauseAllMedia();
 		await this.resyncTime();
 		await this.playAllMedia();
 
-		reenablers.map(reenable => reenable());
+		reenable();
 	}
 
 	resyncTime() {
