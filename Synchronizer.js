@@ -24,15 +24,20 @@ export default class Synchronizer {
 
 		this.offsetTime = offsetTime;
 
+		this.stifleUntilLoadThenSync();
+	}
+	
+	async stifleUntilLoadThenSync() {
 		const reenable = this.stifleExternalPlayAllMedia();
-		Promise.all([
+
+		await Promise.all([
 			this.controllerMedi.continueLoad(),
 			this.targetMedi.continueLoad(),
-		]).then(() => {
-			this.sync();
-		}).finally(() => {
+		]).finally(() => {
 			reenable();
 		});
+
+		this.sync();
 	}
 
 	/**
@@ -68,6 +73,14 @@ export default class Synchronizer {
 			this.controllerMedi.on(Medi.RATECHANGE, () => {
 				this.resyncRate();
 			}),
+
+			this.controllerMedi.on(Medi.LOAD_START, () => {
+				this.targetMedi.pause();
+
+				unsync();
+				this.targetMedi.resrc(this.controllerMedi.src);
+				this.stifleUntilLoadThenSync();
+			}),
 		];
 
 		let usingSpeedCorrection = false;
@@ -75,7 +88,7 @@ export default class Synchronizer {
 		const timeDriftLoop = new TimeoutLoop(async now => {
 			// Prevents "race condition"
 			// TODO bleh
-			if (this.targetMedi.triggeringPause || this.targetMedi.paused) {
+			if (this.targetMedi.triggeringPause || this.targetMedi.paused || this.controllerMedi.paused) {
 				timeDriftLoop.stop();
 				return;
 			}
@@ -91,7 +104,7 @@ export default class Synchronizer {
 			// when ending.
 
 			if (Math.abs(timeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
-				// console.log("drift too big");
+				console.log("drift too big");
 
 				await this.pitstopResyncTime();
 				usingSpeedCorrection = false;
@@ -123,13 +136,15 @@ export default class Synchronizer {
 			}),
 		);
 
-		return () => {
+		const unsync = () => {
 			for (const listener of listeners) {
 				listener.detach();
 			}
 
 			timeDriftLoop.stop();
 		};
+
+		return unsync;
 	}
 
 	pauseAllMedia() {

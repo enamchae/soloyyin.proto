@@ -70,6 +70,10 @@ export default class Medi {
 		return this.media.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 	}
 
+	get src() {
+		return this.media.currentSrc;
+	}
+
 	constructor(media) {
 		this.media = media;
 
@@ -140,6 +144,13 @@ export default class Medi {
 		});
 
 		this.media.addEventListener("loadstart", event => {
+			const firedWhilePlaying = this.mediaState === MediaState.PLAYBACK_STARTED;
+			this.mediaState = MediaState.PLAYBACK_STOPPED;
+
+			if (firedWhilePlaying) {
+				dispatchEvent(this, Medi.PLAYBACK_STOP);
+			}
+
 			dispatchEvent(this, Medi.LOAD_START);
 		});
 	}
@@ -178,8 +189,14 @@ export default class Medi {
 		this.awaitingSeeked = false;
 	}
 
-	async accel(rate) {
+	accel(rate) {
 		this.media.playbackRate = rate;
+	}
+
+	async resrc(src) {
+		this.triggeringPause = true;
+		await this.rawResrc(src);
+		this.triggeringPause = false;
 	}
 
 	continueLoad() {
@@ -222,6 +239,13 @@ export default class Medi {
 
 			this.media.currentTime = time;
 		});
+	}
+
+	rawResrc(src) {
+		if (this.media.currentSrc !== src) {
+			this.media.src = src;
+		}
+		return this.untilLoaded();
 	}
 
 	on(eventType, handler) {
@@ -291,7 +315,7 @@ export default class Medi {
 /**
  * @enum
  */
-const MediaState = Object.freeze(class MediaState {
+export const MediaState = Object.freeze(class MediaState {
 	static PAUSED = new MediaState({paused: true, playbackStarted: false});
 	static PLAYBACK_STOPPED = new MediaState({paused: false, playbackStarted: false});
 	static PLAYBACK_STARTED = new MediaState({paused: false, playbackStarted: true});
