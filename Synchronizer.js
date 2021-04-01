@@ -75,8 +75,6 @@ export default class Synchronizer {
 			}),
 
 			this.controllerMedi.on(Medi.LOAD_START, () => {
-				this.targetMedi.pause();
-
 				unsync();
 				this.targetMedi.resrc(this.controllerMedi.src);
 				this.stifleUntilLoadThenSync();
@@ -104,7 +102,7 @@ export default class Synchronizer {
 			// when ending.
 
 			if (Math.abs(timeDrift) > MAX_CORRECTABLE_TIME_DRIFT) {
-				console.log("drift too big");
+				// console.log("drift too big");
 
 				await this.pitstopResyncTime();
 				usingSpeedCorrection = false;
