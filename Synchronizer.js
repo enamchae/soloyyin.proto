@@ -24,40 +24,61 @@ export default class Synchronizer {
 
 		this.offsetTime = offsetTime;
 
+		const reenable = this.stifleExternalPlayAllMedia();
+		Promise.all([
+			this.controllerMedi.continueLoad(),
+			this.targetMedi.continueLoad(),
+		]).then(() => {
+			this.sync();
+		}).finally(() => {
+			reenable();
+		});
+	}
+
+	/**
+	 * 
+	 * @returns Function to stop synching.
+	 */
+	sync() {
 		this.resyncTime();
 		this.resyncRate();
 
-		this.controllerMedi.on(Medi.EXTERNAL_PLAY, () => {
-			this.targetMedi.play();
-		});
-
-		this.controllerMedi.on(Medi.EXTERNAL_PAUSE, async () => {
-			await this.targetMedi.pause();
-			await this.resyncTime();
-		});
-
-		this.controllerMedi.on(Medi.EXTERNAL_WAITING, () => {
-			this.pitstopResyncTime();
-		});
-
-		this.targetMedi.on(Medi.EXTERNAL_WAITING, () => {
-			this.pitstopResyncTime();
-		});
-
-		this.controllerMedi.on(Medi.SEEKING, () => {
-			this.resyncTime();
-		});
-
-		this.controllerMedi.on(Medi.RATECHANGE, () => {
-			this.resyncRate();
-		});
+		const listeners = [
+			this.controllerMedi.on(Medi.EXTERNAL_PLAY, () => {
+				this.targetMedi.play();
+			}),
+	
+			this.controllerMedi.on(Medi.EXTERNAL_PAUSE, async () => {
+				await this.targetMedi.pause();
+				await this.resyncTime();
+			}),
+	
+			this.controllerMedi.on(Medi.EXTERNAL_WAITING, () => {
+				this.pitstopResyncTime();
+			}),
+	
+			this.targetMedi.on(Medi.EXTERNAL_WAITING, () => {
+				this.pitstopResyncTime();
+			}),
+	
+			this.controllerMedi.on(Medi.SEEKING, () => {
+				this.resyncTime();
+			}),
+	
+			this.controllerMedi.on(Medi.RATECHANGE, () => {
+				this.resyncRate();
+			}),
+		];
 
 		let usingSpeedCorrection = false;
 		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;
 		const timeDriftLoop = new TimeoutLoop(async now => {
 			// Prevents "race condition"
 			// TODO bleh
-			if (this.targetMedi.triggeringPause || this.targetMedi.paused) return;
+			if (this.targetMedi.triggeringPause || this.targetMedi.paused) {
+				timeDriftLoop.stop();
+				return;
+			}
 
 			const timeDrift = this.targetMediaTimeDrift();
 
@@ -91,23 +112,24 @@ export default class Synchronizer {
 			this.resyncRate();
 		});
 
-		this.targetMedi.on(Medi.PLAYBACK_START, () => {
-			timeDriftLoop.start();
-		});
+		listeners.push(
+			this.targetMedi.on(Medi.PLAYBACK_START, () => {
+				timeDriftLoop.start();
+			}),
 
-		this.targetMedi.on(Medi.PLAYBACK_STOP, () => {
+			this.targetMedi.on(Medi.PLAYBACK_STOP, () => {
+				timeDriftLoop.stop();
+				usingSpeedCorrection = false;
+			}),
+		);
+
+		return () => {
+			for (const listener of listeners) {
+				listener.detach();
+			}
+
 			timeDriftLoop.stop();
-			usingSpeedCorrection = false;
-		});
-
-		// TODO synchronzier handlers should not run if target is unloaded
-		const reenable = this.stifleExternalPlayAllMedia();
-		Promise.all([
-			this.controllerMedi.continueLoad(),
-			this.targetMedi.continueLoad(),
-		]).finally(() => {
-			reenable();
-		});
+		};
 	}
 
 	pauseAllMedia() {

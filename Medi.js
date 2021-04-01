@@ -226,7 +226,7 @@ export default class Medi {
 
 	on(eventType, handler) {
 		this.eventTarget.addEventListener(eventType, handler);
-		return handler;
+		return new Listener(this.eventTarget, eventType, handler);
 	}
 
 	off(eventType, handler) {
@@ -263,7 +263,7 @@ export default class Medi {
 
 	/**
 	 * Stifles external play events by pausing the media immediately.
-	 * @returns A function to disable the play stifler.
+	 * @returns Function to disable the play stifler.
 	 */
 	stifleExternalPlay() {
 		if (this.externalPlayStifled) throw new Error();
@@ -271,7 +271,7 @@ export default class Medi {
 		// `preventDefault` does nothing on `play` or `playing` events
 
 		const startTime = this.time;
-		const playStifler = this.on(Medi.STIFLABLE_EXTERNAL_PLAY, async () => {
+		const playStiflerListener = this.on(Medi.STIFLABLE_EXTERNAL_PLAY, async () => {
 			await this.pause();
 			await this.seek(startTime);
 		});
@@ -282,7 +282,7 @@ export default class Medi {
 			if (tried) return;
 			tried = true;
 
-			this.off(Medi.STIFLABLE_EXTERNAL_PLAY, playStifler);
+			playStiflerListener.detach();
 			this.externalPlayStifled = false;
 		};
 	}
@@ -305,3 +305,19 @@ const MediaState = Object.freeze(class MediaState {
 		Object.freeze(this);
 	}
 });
+
+class Listener {
+	target;
+	type;
+	handler;
+	
+	constructor(target, type, handler) {
+		this.target = target;
+		this.type = type;
+		this.handler = handler;
+	}
+
+	detach() {
+		this.target.removeEventListener(this.type, this.handler);
+	}
+}

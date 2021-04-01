@@ -5,7 +5,7 @@ import ExtremaAnalyser from "./ExtremaAnalyser.js";
 
 const createLookaheadMedia = media => {
 	const lookaheadMedia = document.createElement("video");
-	lookaheadMedia.src = media.currentSrc + "1";
+	lookaheadMedia.src = media.currentSrc;
 	lookaheadMedia.preload = true;
 	return lookaheadMedia;
 };
