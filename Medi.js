@@ -11,7 +11,7 @@ const dispatchEvent = (medi, eventType) => {
 // https://html.spec.whatwg.org/multipage/media.html#mediaevents
 
 /**
- * Wrapper for media elements that tracks whether some media events are external or not. External events are those triggered outside of this object's dedicated wrapper methods.
+ * Wrapper for media elements that provides some extra events and methods.
  */
 export default class Medi {
 	/** Will not fire when external play is stifled. */
@@ -35,11 +35,11 @@ export default class Medi {
 	
 	/** Alias for `playing`. */
 	static PLAYBACK_START = "playing";
-	/** Fired when playback stops (captures `pause` and usually `waiting`). */
+	/** Fired when playback stops (captures `pause`, and situationally `waiting` and `loadstart`). */
 	static PLAYBACK_STOP = "stop";
 
 	static LOAD_BEGIN = "loadstart";
-	static LOAD_METADATA_END = "loaddeddata";
+	static LOAD_METADATA_END = "loadedmetadata";
 	static LOAD_END = "loadeddata";
 
 	// static SRC_URL_CHANGE = "srcurlchange";

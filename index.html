@@ -94,7 +94,7 @@ const THRESHOLD_DB = -16;
 	canvasContext.translate(0, -1);
 	canvasContext.fillStyle = "#aaa";
 
-	await soloyyin.synchronizer.stifleAndSyncSrcUrlUntilLoaded();
+	await soloyyin.synchronizer.onReload();
 	soloyyin.synchronizer.sync();
 	
 /* 	const logEvent = event => console.log(`%c${event.type}`, "color: blue; font-weight: 700;");

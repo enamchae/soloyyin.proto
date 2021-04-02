@@ -1,5 +1,5 @@
 import {AnimLoop, TimeoutLoop} from "./Looper.js";
-import Synchronizer from "./Synchronizer.js";
+import {TwinSync} from "./Synchronizer.js";
 import Medi from "./Medi.js";
 import ExtremaAnalyser from "./ExtremaAnalyser.js";
 
@@ -26,7 +26,7 @@ export default class Soloyyin {
 		onAnimationFrame,
 	}={}) {
 		const lookaheadMedia = createLookaheadMedia(media);
-		const synchronizer = new Synchronizer(media, lookaheadMedia, lookaheadMargin);
+		const synchronizer = new TwinSync(media, lookaheadMedia, lookaheadMargin);
 
 		const extremaAnalyser = await ExtremaAnalyser.construct(lookaheadMedia, {
 			historyDuration: lookbehindMargin + lookaheadMargin,

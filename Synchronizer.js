@@ -25,40 +25,20 @@ export default class Synchronizer {
 		this.offsetTime = offsetTime;
 	}
 	
-	stifleUntilLoaded() {
+	onReload() {
 		const reenable = this.stifleExternalPlayAllMedia();
 
-		return this.continueLoadAllMedia().finally(() => {
-			reenable();
-		});
+		return this.continueLoadAllMedia()
+				.finally(() => { reenable(); })
+				.catch(() => this.waitForReload());
 	}
 
-	stifleAndSyncSrcUrlUntilLoaded() {
+	waitForReload() {
 		return new Promise(resolve => {
-			const reenable = this.stifleExternalPlayAllMedia();
-			
-			// The `loadedmetadata` event is enough for the `currentSrc` property to have updated; MutationObserver is not
-			const metadataListener = this.controllerMedi.on(Medi.LOAD_METADATA_END, async () => {
-				if (this.targetMedi.currentSrc !== this.controllerMedi.currentSrc) {
-					this.resyncSrc();
-				}
-	
-				resolve(this.untilLoadedAllMedia()
-						.finally(() => {
-							metadataListener.detach();
-							reenable();
-						})
-						.catch(() => new Promise(resolve => {
-							this.controllerMedi.on(Medi.LOAD_BEGIN, () => {
-								resolve(this.stifleAndSyncSrcUrlUntilLoaded());
-							}, {once: true});
-						}))
-				);
-			});
-
-			if (this.controllerMedi.loadedMetadata) {
-				metadataListener.handler();
-			}
+			this.controllerMedi.on(Medi.LOAD_BEGIN, () => {
+				// Retry
+				resolve(this.onReload());
+			}, {once: true});
 		});
 	}
 
@@ -101,7 +81,7 @@ export default class Synchronizer {
 
 				unsync();
 
-				await this.stifleAndSyncSrcUrlUntilLoaded();
+				await this.onReload();
 				this.sync();
 			}),
 		];
@@ -213,10 +193,6 @@ export default class Synchronizer {
 		reenable();
 	}
 
-	resyncSrc() {
-		return this.targetMedi.resrc(this.controllerMedi.currentSrc);
-	}
-
 	resyncTime() {
 		return this.targetMedi.seek(this.controllerMedi.time + this.offsetTime);
 	}
@@ -227,5 +203,40 @@ export default class Synchronizer {
 
 	targetMediaTimeDrift() {
 		return this.targetMedi.time - this.controllerMedi.time - this.offsetTime;
+	}
+}
+
+export class TwinSync extends Synchronizer {
+	onReload() {
+		return new Promise(resolve => {
+			const reenable = this.stifleExternalPlayAllMedia();
+			
+			// The `loadedmetadata` event is enough for the `currentSrc` property to have updated; MutationObserver is not
+			let handlerExecuted = false;
+			const metadataListener = this.controllerMedi.on(Medi.LOAD_METADATA_END, async () => {
+				if (this.targetMedi.currentSrc !== this.controllerMedi.currentSrc) {
+					this.resyncSrc();
+				}
+	
+				if (handlerExecuted) return;
+				handlerExecuted = true;
+		
+				resolve(this.untilLoadedAllMedia()
+						.finally(() => {
+							metadataListener.detach();
+							reenable();
+						})
+						.catch(() => this.waitForReload())
+				);
+			});
+
+			if (this.controllerMedi.loadedMetadata) {
+				metadataListener.handler();
+			}
+		});
+	}
+
+	resyncSrc() {
+		return this.targetMedi.resrc(this.controllerMedi.currentSrc);
 	}
 }
