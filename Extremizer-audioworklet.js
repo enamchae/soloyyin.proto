@@ -1,3 +1,4 @@
+import ExtremizerConsts from "./Extremizer-consts.js";
 import RollingF32Array from "./RollingArray.js";
 
 const takeStep = function* (iterable, step=1) {
@@ -66,9 +67,25 @@ class ExtremizerProcessor extends AudioWorkletProcessor {
 		this.sampleHistory = new ExtremizerRollingArray(this.sampleHistoryLength);
 
 		this.port.onmessage = event => {
-			const sampleExtrema = this.sampleHistory.computeExtrema() ?? {sampleMin: NaN, sampleMax: NaN};
+			const messageAction = event.data;
+			let data = null;
+			switch (messageAction) {
+				case ExtremizerConsts.MessageAction.pollExtrema:
+					data = this.sampleHistory.computeExtrema() ?? {sampleMin: NaN, sampleMax: NaN};
+					break;
 
-			this.port.postMessage(sampleExtrema);
+				case ExtremizerConsts.MessageAction.invalidateSampleHistory:
+					this.sampleHistory.resetPushload();
+					break;
+
+				default:
+					throw new TypeError(`unknown action: ${messageAction}`);
+			}
+
+			this.port.postMessage({
+				data,
+				messageAction,
+			});
 		};
 	}
 
@@ -108,4 +125,4 @@ class ExtremizerProcessor extends AudioWorkletProcessor {
 	}
 }
 
-registerProcessor("extremizer", ExtremizerProcessor);
+registerProcessor(ExtremizerConsts.processorName, ExtremizerProcessor);

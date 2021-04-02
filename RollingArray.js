@@ -68,5 +68,10 @@ export default class RollingF32Array {
 
 	clear() {
 		this.#array = new Float32Array(this.#capacity);
+		this.pushload = 0;
+	}
+
+	resetPushload() {
+		this.pushload = 0;
 	}
 };

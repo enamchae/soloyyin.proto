@@ -1,3 +1,5 @@
+import ExtremizerConsts from "./Extremizer-consts.js";
+
 export default class ExtremaAnalyser {
 	media;
 
@@ -58,11 +60,15 @@ export default class ExtremaAnalyser {
 		const {sampleMin, sampleMax} = await this.extremizer.pollExtrema();
 		return this.maxAmpFromExtrema(sampleMin, sampleMax);
 	}
+
+	invalidateSampleHistory() {
+		return this.extremizer.invalidateSampleHistory();
+	}
 }
 
 class ExtremizerNode extends AudioWorkletNode {
 	constructor(audioContext, processorOptions) {
-		super(audioContext, "extremizer", {
+		super(audioContext, ExtremizerConsts.processorName, {
 			processorOptions,
 		});
 
@@ -75,11 +81,29 @@ class ExtremizerNode extends AudioWorkletNode {
 
 	pollExtrema() {
 		return new Promise(resolve => {
-			this.port.addEventListener("message", event => {
-				resolve(event.data);
-			}, {once: true});
+			const handler = event => {
+				if (event.data.messageAction !== ExtremizerConsts.MessageAction.pollExtrema) return;
 
-			this.port.postMessage(null);
+				this.port.removeEventListener("message", handler);
+				resolve(event.data.data);
+			};
+
+			this.port.addEventListener("message", handler);
+			this.port.postMessage(ExtremizerConsts.MessageAction.pollExtrema);
+		});
+	}
+
+	invalidateSampleHistory() {
+		return new Promise(resolve => {
+			const handler = event => {
+				if (event.data.messageAction !== ExtremizerConsts.MessageAction.invalidateSampleHistory) return;
+				
+				this.port.removeEventListener("message", handler);
+				resolve();
+			};
+
+			this.port.addEventListener("message", handler);
+			this.port.postMessage(ExtremizerConsts.MessageAction.invalidateSampleHistory);
 		});
 	}
 }
