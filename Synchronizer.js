@@ -211,7 +211,8 @@ export class TwinSync extends Synchronizer {
 		return new Promise(resolve => {
 			const reenable = this.stifleExternalPlayAllMedia();
 			
-			// The `loadedmetadata` event is enough for the `currentSrc` property to have updated; MutationObserver is not
+			// By the time `loadedmetadata` fires, the `currentSrc` property will have updated;
+			// this is not the case with MutationObserver.
 			let handlerExecuted = false;
 			const metadataListener = this.controllerMedi.on(Medi.LOAD_METADATA_END, async () => {
 				if (this.targetMedi.currentSrc !== this.controllerMedi.currentSrc) {

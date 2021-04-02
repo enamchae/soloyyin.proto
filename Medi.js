@@ -169,22 +169,6 @@ export default class Medi {
 		this.media.addEventListener("loadeddata", () => {
 			dispatchEvent(this, Medi.LOAD_END);
 		});
-
-/* 		// Attempts to track when the media `src` attribute changes (automatically done when `src` property changes)
-
-		// `srcObject` changes and child `<source>` element changes are not tracked
-		let oldSrc = this.media.src;
-		const observer = new MutationObserver(mutations => {
-			if (oldSrc === this.media.src) return;
-
-			oldSrc = this.media.src;
-			dispatchEvent(this, Medi.SRC_URL_CHANGE);
-		});
-		observer.observe(this.media, {
-			subtree: true,
-			attributes: true,
-			childList: true,
-		}); */
 	}
 
 	async play() {
@@ -229,11 +213,11 @@ export default class Medi {
 		this.media.src = src;
 	}
 
-	continueLoad({instantReject=true}={}) {
+	continueLoad() {
 		if (!this.loaded) {
 			this.media.load();
 		}
-		return this.untilLoaded({instantReject});
+		return this.untilLoaded();
 	}
 
 	rawPlay() {
@@ -280,14 +264,14 @@ export default class Medi {
 		this.eventTarget.removeEventListener(eventType, handler);
 	}
 
-	untilLoaded({instantReject=true}={}) {
+	untilLoaded() {
 		return new Promise((resolve, reject) => {
 			if (this.loaded) {
 				resolve();
 				return;
 			}
 
-			if (instantReject && this.media.error) {
+			if (this.media.error) {
 				reject(this.media.error);
 				return;
 			}
