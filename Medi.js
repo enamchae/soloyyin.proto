@@ -242,9 +242,7 @@ export default class Medi {
 	}
 
 	rawResrc(src) {
-		if (this.media.currentSrc !== src) {
-			this.media.src = src;
-		}
+		this.media.src = src;
 		return this.untilLoaded();
 	}
 
