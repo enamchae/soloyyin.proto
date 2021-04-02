@@ -24,20 +24,33 @@ export default class Synchronizer {
 
 		this.offsetTime = offsetTime;
 
-		this.stifleUntilLoadThenSync();
+		this.stifleAndSyncSrcUrlUntilLoaded().then(() => {
+			this.sync();
+		});
 	}
 	
-	async stifleUntilLoadThenSync() {
+	stifleUntilLoaded() {
 		const reenable = this.stifleExternalPlayAllMedia();
 
-		await Promise.all([
-			this.controllerMedi.continueLoad(),
-			this.targetMedi.continueLoad(),
-		]).finally(() => {
+		return this.continueLoadAllMedia().finally(() => {
 			reenable();
 		});
+	}
 
-		this.sync();
+	async stifleAndSyncSrcUrlUntilLoaded() {
+		const reenable = this.stifleExternalPlayAllMedia();
+		// The `loadedmetadata` event is enough for the `currentSrc` property to have updated; MutationObserver is not
+		const listener = this.controllerMedi.on(Medi.LOAD_METADATA_END, async () => {
+			if (this.targetMedi.currentSrc !== this.controllerMedi.currentSrc) {
+				this.resyncSrc();
+			}
+		});
+
+		await this.continueLoadAllMedia().finally(() => {
+			reenable();
+		});
+		listener.detach();
+		reenable();
 	}
 
 	/**
@@ -74,29 +87,26 @@ export default class Synchronizer {
 				this.resyncRate();
 			}),
 
-			this.controllerMedi.on(Medi.LOAD_START, () => {
+			this.controllerMedi.on(Medi.LOAD_BEGIN, async () => {
+				this.targetMedi.pause();
+
 				unsync();
-				this.targetMedi.resrc(this.controllerMedi.src);
-				this.stifleUntilLoadThenSync();
+
+				await this.stifleAndSyncSrcUrlUntilLoaded();
+				this.sync();
 			}),
 		];
 
 		let usingSpeedCorrection = false;
 		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;
 		const timeDriftLoop = new TimeoutLoop(async now => {
-			// Prevents "race condition"
-			// TODO bleh
+			// may be fragile
 			if (this.targetMedi.triggeringPause || this.targetMedi.paused || this.controllerMedi.paused) {
 				timeDriftLoop.stop();
 				return;
 			}
 
 			const timeDrift = this.targetMediaTimeDrift();
-
-			// TODO inconsistent. Current settings may cause target media to overshoot by next iteration.
-			// Changing playback rate to many different values can cause slowdown.
-
-			// TODO when seeking, the time drift check may trigger the pause
 
 			// Edge condition (near end of video, when 1 video ends) is handled by the target video firing `pause`
 			// when ending.
@@ -159,6 +169,13 @@ export default class Synchronizer {
 		]);
 	}
 
+	continueLoadAllMedia() {
+		return Promise.all([
+			this.controllerMedi.continueLoad(),
+			this.targetMedi.continueLoad(),
+		]);
+	}
+
 	stifleExternalPlayAllMedia() {
 		const reenablers = [
 			this.controllerMedi.stifleExternalPlay(),
@@ -178,6 +195,10 @@ export default class Synchronizer {
 		await this.playAllMedia();
 
 		reenable();
+	}
+
+	resyncSrc() {
+		return this.targetMedi.resrc(this.controllerMedi.currentSrc);
 	}
 
 	resyncTime() {

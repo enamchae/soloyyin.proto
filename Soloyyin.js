@@ -54,7 +54,7 @@ export default class Soloyyin {
 			animLoop.stop();
 		});
 	
-		lookaheadMedi.on(Medi.LOAD_START, event => {
+		lookaheadMedi.on(Medi.LOAD_BEGIN, event => {
 			extremaAnalyser.invalidateSampleHistory();
 		});
 

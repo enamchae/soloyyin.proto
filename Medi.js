@@ -38,7 +38,11 @@ export default class Medi {
 	/** Fired when playback stops (captures `pause` and usually `waiting`). */
 	static PLAYBACK_STOP = "stop";
 
-	static LOAD_START = "loadstart";
+	static LOAD_BEGIN = "loadstart";
+	static LOAD_METADATA_END = "loaddeddata";
+	static LOAD_END = "loadeddata";
+
+	// static SRC_URL_CHANGE = "srcurlchange";
 
 	eventTarget = new EventTarget();
 	media;
@@ -70,7 +74,11 @@ export default class Medi {
 		return this.media.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 	}
 
-	get src() {
+	get loadedMetadata() {
+		return this.media.readyState >= HTMLMediaElement.HAVE_METADATA;
+	}
+
+	get currentSrc() {
 		return this.media.currentSrc;
 	}
 
@@ -145,14 +153,38 @@ export default class Medi {
 
 		this.media.addEventListener("loadstart", event => {
 			const firedWhilePlaying = this.mediaState === MediaState.PLAYBACK_STARTED;
-			this.mediaState = MediaState.PLAYBACK_STOPPED;
+			this.mediaState = MediaState.PAUSED;
 
 			if (firedWhilePlaying) {
 				dispatchEvent(this, Medi.PLAYBACK_STOP);
 			}
 
-			dispatchEvent(this, Medi.LOAD_START);
+			dispatchEvent(this, Medi.LOAD_BEGIN);
 		});
+
+		this.media.addEventListener("loadedmetadata", () => {
+			dispatchEvent(this, Medi.LOAD_METADATA_END);
+		});
+
+		this.media.addEventListener("loadeddata", () => {
+			dispatchEvent(this, Medi.LOAD_END);
+		});
+
+/* 		// Attempts to track when the media `src` attribute changes (automatically done when `src` property changes)
+
+		// `srcObject` changes and child `<source>` element changes are not tracked
+		let oldSrc = this.media.src;
+		const observer = new MutationObserver(mutations => {
+			if (oldSrc === this.media.src) return;
+
+			oldSrc = this.media.src;
+			dispatchEvent(this, Medi.SRC_URL_CHANGE);
+		});
+		observer.observe(this.media, {
+			subtree: true,
+			attributes: true,
+			childList: true,
+		}); */
 	}
 
 	async play() {
@@ -193,10 +225,8 @@ export default class Medi {
 		this.media.playbackRate = rate;
 	}
 
-	async resrc(src) {
-		this.triggeringPause = true;
-		await this.rawResrc(src);
-		this.triggeringPause = false;
+	resrc(src) {
+		this.media.src = src;
 	}
 
 	continueLoad() {
@@ -241,11 +271,6 @@ export default class Medi {
 		});
 	}
 
-	rawResrc(src) {
-		this.media.src = src;
-		return this.untilLoaded();
-	}
-
 	on(eventType, handler) {
 		this.eventTarget.addEventListener(eventType, handler);
 		return new Listener(this.eventTarget, eventType, handler);
@@ -278,6 +303,34 @@ export default class Medi {
 			};
 
 			this.media.addEventListener("loadeddata", onsuccess, {once: true});
+
+			this.media.addEventListener("error", onfailure, {once: true});
+		});
+	}
+
+	untilLoadedMetadata() {
+		return new Promise((resolve, reject) => {
+			if (this.loadedMetadata) {
+				resolve();
+				return;
+			}
+
+			if (this.media.error) {
+				reject(this.media.error);
+				return;
+			}
+
+			const onsuccess = () => {
+				this.media.removeEventListener("error", onfailure, {once: true});
+				resolve();
+			};
+
+			const onfailure = () => {
+				this.media.removeEventListener("loadedmetadata", onsuccess, {once: true});
+				reject(this.media.error);
+			};
+
+			this.media.addEventListener("loadedmetadata", onsuccess, {once: true});
 
 			this.media.addEventListener("error", onfailure, {once: true});
 		});
