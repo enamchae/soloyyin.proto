@@ -229,11 +229,11 @@ export default class Medi {
 		this.media.src = src;
 	}
 
-	continueLoad() {
+	continueLoad({instantReject=true}={}) {
 		if (!this.loaded) {
 			this.media.load();
 		}
-		return this.untilLoaded();
+		return this.untilLoaded({instantReject});
 	}
 
 	rawPlay() {
@@ -271,23 +271,23 @@ export default class Medi {
 		});
 	}
 
-	on(eventType, handler) {
-		this.eventTarget.addEventListener(eventType, handler);
-		return new Listener(this.eventTarget, eventType, handler);
+	on(eventType, handler, options) {
+		this.eventTarget.addEventListener(eventType, handler, options);
+		return new Listener(this.eventTarget, eventType, handler, options);
 	}
 
 	off(eventType, handler) {
 		this.eventTarget.removeEventListener(eventType, handler);
 	}
 
-	untilLoaded() {
+	untilLoaded({instantReject=true}={}) {
 		return new Promise((resolve, reject) => {
 			if (this.loaded) {
 				resolve();
 				return;
 			}
 
-			if (this.media.error) {
+			if (instantReject && this.media.error) {
 				reject(this.media.error);
 				return;
 			}
@@ -308,7 +308,7 @@ export default class Medi {
 		});
 	}
 
-	untilLoadedMetadata() {
+/* 	untilLoadedMetadata() {
 		return new Promise((resolve, reject) => {
 			if (this.loadedMetadata) {
 				resolve();
@@ -334,7 +334,7 @@ export default class Medi {
 
 			this.media.addEventListener("error", onfailure, {once: true});
 		});
-	}
+	} */
 
 	/**
 	 * Stifles external play events by pausing the media immediately.
@@ -385,14 +385,16 @@ class Listener {
 	target;
 	type;
 	handler;
-	
-	constructor(target, type, handler) {
+	options;
+
+	constructor(target, type, handler, options) {
 		this.target = target;
 		this.type = type;
 		this.handler = handler;
+		this.options = options;
 	}
 
 	detach() {
-		this.target.removeEventListener(this.type, this.handler);
+		this.target.removeEventListener(this.type, this.handler, this.options);
 	}
 }

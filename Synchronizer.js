@@ -37,20 +37,34 @@ export default class Synchronizer {
 		});
 	}
 
-	async stifleAndSyncSrcUrlUntilLoaded() {
-		const reenable = this.stifleExternalPlayAllMedia();
-		// The `loadedmetadata` event is enough for the `currentSrc` property to have updated; MutationObserver is not
-		const listener = this.controllerMedi.on(Medi.LOAD_METADATA_END, async () => {
-			if (this.targetMedi.currentSrc !== this.controllerMedi.currentSrc) {
-				this.resyncSrc();
+	stifleAndSyncSrcUrlUntilLoaded() {
+		return new Promise(resolve => {
+			if (this.controllerMedi.loaded && this.targetMedi.loaded) {
+				resolve();
+				return;
 			}
-		});
 
-		await this.continueLoadAllMedia().finally(() => {
-			reenable();
+			const reenable = this.stifleExternalPlayAllMedia();
+			
+			// The `loadedmetadata` event is enough for the `currentSrc` property to have updated; MutationObserver is not
+			const listener = this.controllerMedi.on(Medi.LOAD_METADATA_END, async () => {
+				if (this.targetMedi.currentSrc !== this.controllerMedi.currentSrc) {
+					this.resyncSrc();
+				}
+	
+				resolve(this.untilLoadedAllMedia()
+						.finally(() => {
+							listener.detach();
+							reenable();
+						})
+						.catch(() => new Promise(resolve => {
+							this.controllerMedi.on(Medi.LOAD_BEGIN, () => {
+								resolve(this.stifleAndSyncSrcUrlUntilLoaded());
+							}, {once: true});
+						}))
+				);
+			});
 		});
-		listener.detach();
-		reenable();
 	}
 
 	/**
@@ -166,6 +180,13 @@ export default class Synchronizer {
 		return Promise.all([
 			this.controllerMedi.play(),
 			this.targetMedi.play(),
+		]);
+	}
+
+	untilLoadedAllMedia() {
+		return Promise.all([
+			this.controllerMedi.untilLoaded(),
+			this.targetMedi.untilLoaded(),
 		]);
 	}
 
