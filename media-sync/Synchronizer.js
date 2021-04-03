@@ -1,4 +1,4 @@
-import {TimeoutLoop} from "./Looper.js";
+import {TimeoutLoop} from "../util/Looper.js";
 import Medi from "./Medi.js";
 
 const TIME_DRIFT_CORRECTION_SPEED_FACTOR = 1.25;

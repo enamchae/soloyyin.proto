@@ -31,7 +31,7 @@
 
 		<script type="module">
 import Soloyyin from "./Soloyyin.js";
-import ExtremaAnalyser from "./ExtremaAnalyser.js";
+import ExtremaAnalyser from "./volume-calculation/ExtremaAnalyser.js";
 
 document.querySelector(".debugger").addEventListener("click", () => {
 	debugger;
@@ -94,9 +94,10 @@ const THRESHOLD_DB = -16;
 	canvasContext.translate(0, -1);
 	canvasContext.fillStyle = "#aaa";
 
-	await soloyyin.synchronizer.onReload();
-	soloyyin.synchronizer.sync();
+	const stop = await soloyyin.start();
 	
+	setTimeout(stop, 3000);
+
 /* 	const logEvent = event => console.log(`%c${event.type}`, "color: blue; font-weight: 700;");
 
 	video.addEventListener("canplay", logEvent);

@@ -1,7 +1,7 @@
-import {AnimLoop, TimeoutLoop} from "./Looper.js";
-import {TwinSync} from "./Synchronizer.js";
-import Medi from "./Medi.js";
-import ExtremaAnalyser from "./ExtremaAnalyser.js";
+import {AnimLoop, TimeoutLoop} from "./util/Looper.js";
+import {TwinSync} from "./media-sync/Synchronizer.js";
+import Medi from "./media-sync/Medi.js";
+import ExtremaAnalyser from "./volume-calc/ExtremaAnalyser.js";
 
 const createLookaheadMedia = media => {
 	const lookaheadMedia = document.createElement("video");
@@ -17,6 +17,9 @@ export default class Soloyyin {
 	synchronizer;
 
 	extremaAnalyser;
+
+	dbLoop;
+	animLoop;
 
 	static async construct(media, {
 		lookbehindMargin,
@@ -34,35 +37,57 @@ export default class Soloyyin {
 
 		const dbLoop = new TimeoutLoop(onIteration);
 		const animLoop = new AnimLoop(onAnimationFrame);
-		
-		const lookaheadMedi = synchronizer.targetMedi;
-		lookaheadMedi.on(Medi.PLAYBACK_START, event => {
-			if (extremaAnalyser.audioContext.state === "suspended") {
-				extremaAnalyser.audioContext.resume();
-			}
-	
-			dbLoop.start();
-			animLoop.start();
-		});
-	
-		lookaheadMedi.on(Medi.PLAYBACK_STOP, event => {
-			if (extremaAnalyser.audioContext.state === "running") {
-				extremaAnalyser.audioContext.suspend();
-			}
-
-			dbLoop.stop();
-			animLoop.stop();
-		});
-	
-		lookaheadMedi.on(Medi.LOAD_BEGIN, event => {
-			extremaAnalyser.invalidateSampleHistory();
-		});
 
 		return Object.assign(new Soloyyin(), {
 			media,
 			lookaheadMedia,
 			synchronizer,
 			extremaAnalyser,
+			dbLoop,
+			animLoop,
 		});
+	}
+
+	async start() {
+		await this.synchronizer.onReload();
+		const unsync = this.synchronizer.sync();
+
+		const lookaheadMedi = this.synchronizer.targetMedi;
+
+		let stopListener;
+		const listeners = [
+			lookaheadMedi.on(Medi.PLAYBACK_START, event => {
+				if (this.extremaAnalyser.audioContext.state === "suspended") {
+					this.extremaAnalyser.audioContext.resume();
+				}
+		
+				this.dbLoop.start();
+				this.animLoop.start();
+			}),
+		
+			stopListener = lookaheadMedi.on(Medi.PLAYBACK_STOP, event => {
+				if (this.extremaAnalyser.audioContext.state === "running") {
+					this.extremaAnalyser.audioContext.suspend();
+				}
+	
+				this.dbLoop.stop();
+				this.animLoop.stop();
+			}),
+		
+			// This could also listen for `seeking`
+			lookaheadMedi.on(Medi.LOAD_BEGIN, event => {
+				this.extremaAnalyser.invalidateSampleHistory();
+			}),
+		];
+
+		return () => {
+			for (const listener of listeners) {
+				listener.detach();
+			}
+
+			stopListener.handler();
+			unsync();
+			lookaheadMedi.pause();
+		};
 	}
 }
