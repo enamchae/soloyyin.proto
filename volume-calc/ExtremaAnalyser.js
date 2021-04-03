@@ -76,7 +76,7 @@ class ExtremizerNode extends AudioWorkletNode {
 	}
 
 	static addToContext(audioContext) {
-		return audioContext.audioWorklet.addModule("Extremizer-audioworklet.js");
+		return audioContext.audioWorklet.addModule("./volume-calc/Extremizer-audioworklet.js"); // Not a relative path?
 	}
 
 	pollExtrema() {

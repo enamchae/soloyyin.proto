@@ -31,7 +31,7 @@
 
 		<script type="module">
 import Soloyyin from "./Soloyyin.js";
-import ExtremaAnalyser from "./volume-calculation/ExtremaAnalyser.js";
+import ExtremaAnalyser from "./volume-calc/ExtremaAnalyser.js";
 
 document.querySelector(".debugger").addEventListener("click", () => {
 	debugger;
@@ -85,6 +85,8 @@ const THRESHOLD_DB = -16;
 		},
 	});
 
+	const stop = await soloyyin.start();
+
 	soloyyin.lookaheadMedia.controls = true;
 	video.insertAdjacentElement("afterend", soloyyin.lookaheadMedia);
 
@@ -93,10 +95,6 @@ const THRESHOLD_DB = -16;
 	canvasContext.scale(1, -canvas.height / 2);
 	canvasContext.translate(0, -1);
 	canvasContext.fillStyle = "#aaa";
-
-	const stop = await soloyyin.start();
-	
-	setTimeout(stop, 3000);
 
 /* 	const logEvent = event => console.log(`%c${event.type}`, "color: blue; font-weight: 700;");
 
