@@ -4,7 +4,7 @@ import ExtremaAnalyser from "./volume-calc/ExtremaAnalyser.js";
 
 const video = document.querySelector("video");
 
-const canvas = document.querySelector("canvas");
+/* const canvas = document.querySelector("canvas");
 const canvasContext = canvas.getContext("2d");
 
 canvas.height = 120;
@@ -18,7 +18,7 @@ const drawTimeDomain = analyserBuffer => {
 	analyserBuffer.forEach((sample, i) => {
 		canvasContext.fillRect(i, 0, 1, sample);
 	});
-};
+}; */
 
 const dbDisplay = document.querySelector(".db");
 const timeDriftDisplay = document.querySelector(".timedrift");
@@ -43,11 +43,9 @@ const toggleButton = document.querySelector("#toggle");
 
 			timeDriftDisplay.textContent = soloyyin.synchronizer.targetMediaTimeDrift().toFixed(6);
 
-			drawTimeDomain(soloyyin.extremaAnalyser.analyserBuffer);
+			// drawTimeDomain(soloyyin.extremaAnalyser.analyserBuffer);
 		},
 	});
-
-	const stop = await soloyyin.start();
 
 /* 	soloyyin.lookaheadMedia.controls = true;
 	video.insertAdjacentElement("afterend", soloyyin.lookaheadMedia); */
@@ -57,7 +55,28 @@ const toggleButton = document.querySelector("#toggle");
 	canvasContext.translate(0, -1);
 	canvasContext.fillStyle = "#aaa"; */
 
-	toggleButton.addEventListener("click", () => {
+	const initToggleButton = () => {
+		assignToggleButtonEvents();
 
-	}, {once: true});
+		toggleButton.disabled = false;
+		toggleButton.textContent = "▶ Start tracking";
+	};
+
+	const assignToggleButtonEvents = () => {
+		toggleButton.addEventListener("click", async () => {
+			toggleButton.disabled = true;
+			toggleButton.textContent = "❚❚ Stop tracking";
+
+			const stop = await soloyyin.start();
+
+			toggleButton.addEventListener("click", () => {
+				initToggleButton();
+				stop();
+			}, {once: true});
+			
+			toggleButton.disabled = false;
+		}, {once: true});
+	};
+	
+	initToggleButton();
 })();

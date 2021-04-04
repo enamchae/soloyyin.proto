@@ -50,8 +50,10 @@ export default class Synchronizer {
 		this.resyncTime();
 		this.resyncRate();
 
+		let pauseListener;
+
 		const listeners = [
-			this.controllerMedi.on(Medi.EXTERNAL_PLAY, () => {
+			pauseListener = this.controllerMedi.on(Medi.EXTERNAL_PLAY, () => {
 				this.targetMedi.play();
 			}),
 	
@@ -85,6 +87,10 @@ export default class Synchronizer {
 				this.sync();
 			}),
 		];
+
+		if (!this.controllerMedi.paused) {
+			pauseListener.handler();
+		}
 
 		let usingSpeedCorrection = false;
 		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;

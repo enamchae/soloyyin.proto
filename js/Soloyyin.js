@@ -87,8 +87,12 @@ export default class Soloyyin {
 			stopperListener.handler();
 			unsync();
 			lookaheadMedi.pause();
+			
+			this.teardown();
 		};
 	}
+
+	teardown() {}
 }
 
 export class BinarySolo extends Soloyyin {
@@ -102,8 +106,8 @@ export class BinarySolo extends Soloyyin {
 	constructor(media, {
 		thresholdAmp,
 
-		softSpeed,
-		loudSpeed,
+		softSpeed=media.playbackRate,
+		loudSpeed=media.playbackRate,
 
 		...options
 	}={}) {
@@ -124,5 +128,9 @@ export class BinarySolo extends Soloyyin {
 		this.thresholdAmp = thresholdAmp;
 		this.softSpeed = softSpeed;
 		this.loudSpeed = loudSpeed;
+	}
+
+	teardown() {
+		this.media.playbackRate = this.loudSpeed;
 	}
 }
