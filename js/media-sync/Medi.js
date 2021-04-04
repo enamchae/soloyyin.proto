@@ -31,7 +31,7 @@ export default class Medi {
 	static WAITING = "waiting";
 
 	static RATECHANGE = "ratechange";
-	static SEEKING = "seeking";
+	static SEEK_BEGIN = "seeking";
 	
 	/** Alias for `playing`. */
 	static PLAYBACK_START = "playing";
@@ -47,7 +47,7 @@ export default class Medi {
 	eventTarget = new EventTarget();
 	media;
 
-	mediaState = MediaState.PAUSED;
+	mediaState;
 
 	triggeringPlay = false;
 	triggeringPause = false;
@@ -71,6 +71,7 @@ export default class Medi {
 	}
 
 	get loaded() {
+		// Might need to clarify/separate this since this returns `false` when waiting
 		return this.media.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 	}
 
@@ -146,7 +147,7 @@ export default class Medi {
 			const firedWhilePlaying = this.mediaState === MediaState.PLAYBACK_STARTED;
 			this.mediaState = MediaState.PLAYBACK_STOPPED;
 
-			dispatchEvent(this, Medi.SEEKING);
+			dispatchEvent(this, Medi.SEEK_BEGIN);
 
 			if (firedWhilePlaying) {
 				dispatchEvent(this, Medi.PLAYBACK_STOP);
@@ -175,6 +176,14 @@ export default class Medi {
 		this.media.addEventListener("loadeddata", () => {
 			dispatchEvent(this, Medi.LOAD_END);
 		});
+
+		if (this.paused) {
+			this.mediaState = MediaState.PAUSED;
+		} else if (this.loaded) {
+			this.mediaState = MediaState.PLAYBACK_STARTED;
+		} else {
+			this.mediaState = MediaState.PLAYBACK_STOPPED;
+		}
 	}
 
 	// TODO `pause` has a chance of raising an uncatchable "The play() request was interrupted by a call to pause()"
@@ -212,7 +221,7 @@ export default class Medi {
 		if (!this.loaded) {
 			this.media.load();
 		}
-		return this.untilLoaded();
+		return this.untilLoad();
 	}
 
 	rawPlay() {
@@ -227,7 +236,8 @@ export default class Medi {
 			}
 	
 			// Try to ensure that the `pause` call does not interrupt an in-progress `play` call
-			await this.play();
+			await this.untilPlaybackStart();
+			// await this.play();
 
 			// `pause` event fires some time after calling `pause`
 			this.media.addEventListener("pause", () => resolve(), {once: true});
@@ -257,7 +267,7 @@ export default class Medi {
 		this.eventTarget.removeEventListener(eventType, handler);
 	}
 
-	untilLoaded() {
+	untilLoad() {
 		return new Promise((resolve, reject) => {
 			if (this.loaded) {
 				resolve();
@@ -282,6 +292,17 @@ export default class Medi {
 			this.media.addEventListener("loadeddata", onsuccess, {once: true});
 
 			this.media.addEventListener("error", onfailure, {once: true});
+		});
+	}
+
+	untilPlaybackStart() {
+		return new Promise(resolve => {
+			if (this.mediaState === MediaState.PLAYBACK_STARTED) {
+				resolve();
+				return;
+			}
+
+			this.on(Medi.PLAYBACK_START, () => resolve(), {once: true});
 		});
 	}
 
@@ -325,14 +346,16 @@ export default class Medi {
 		const startTime = this.time;
 		const playStiflerListener = this.on(Medi.STIFLABLE_EXTERNAL_PLAYBACK_START, async () => {
 			await this.pause();
+
+			if (disabled) return;
 			await this.seek(startTime);
 		});
 		this.externalPlayStifled = true;
 		
-		let tried = false;
+		let disabled = false;
 		return () => {
-			if (tried) return;
-			tried = true;
+			if (disabled) return;
+			disabled = true;
 
 			playStiflerListener.detach();
 			this.externalPlayStifled = false;

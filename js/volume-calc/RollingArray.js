@@ -74,4 +74,4 @@ export default class RollingF32Array {
 	resetPushload() {
 		this.pushload = 0;
 	}
-};
+}

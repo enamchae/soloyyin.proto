@@ -1,10 +1,29 @@
-body {
+* {
+	box-sizing: border-box;
+}
+
+html {
 	margin: 0;
 }
 
-main {
+body {
 	width: 100vw;
 	height: 100vh;
+
+	overflow-y: auto;
+
+	margin: 0;
+	padding: 80px;
+
+	background: repeating-linear-gradient(135deg, #222326 0 30px, #28292c 30px 60px);
+	color: #fff;
+	font-family: Ubuntu Mono, Ubuntu, sans-serif;
+}
+
+main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 
 video {
@@ -12,9 +31,9 @@ video {
 }
 
 .db {
-	background: #fdd;
+	background: #522;
 }
 
 .db.target {
-	background: #bff;
+	background: #255;
 }

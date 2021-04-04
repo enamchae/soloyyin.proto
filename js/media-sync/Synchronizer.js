@@ -68,7 +68,7 @@ export default class Synchronizer {
 				this.pitstopResyncTime();
 			}),
 	
-			this.controllerMedi.on(Medi.SEEKING, () => {
+			this.controllerMedi.on(Medi.SEEK_BEGIN, () => {
 				this.resyncTime();
 			}),
 	
@@ -157,10 +157,10 @@ export default class Synchronizer {
 		]);
 	}
 
-	untilLoadedAllMedia() {
+	untilLoadAllMedia() {
 		return Promise.all([
-			this.controllerMedi.untilLoaded(),
-			this.targetMedi.untilLoaded(),
+			this.controllerMedi.untilLoad(),
+			this.targetMedi.untilLoad(),
 		]);
 	}
 
@@ -179,14 +179,14 @@ export default class Synchronizer {
 	pitstopResyncTime() {
 		if (this.#pitstopPromise) return this.#pitstopPromise; // temp check?
 
-		const reenable = this.stifleControllerExternalPlay();
+		// const reenable = this.stifleControllerExternalPlay();
 
 		this.#pitstopPromise = (async () => {
 			await this.pauseAllMedia();
 			await this.resyncTime();
 			await this.playAllMedia();
 		})().finally(() => {
-			reenable();
+			// reenable();
 			this.#pitstopPromise = null;
 		});
 	}
@@ -220,7 +220,7 @@ export class TwinSync extends Synchronizer {
 				if (handlerExecuted) return;
 				handlerExecuted = true;
 		
-				resolve(this.untilLoadedAllMedia()
+				resolve(this.untilLoadAllMedia()
 						.finally(() => {
 							metadataListener.detach();
 							reenable();
