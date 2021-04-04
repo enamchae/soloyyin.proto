@@ -25,13 +25,44 @@ const timeDriftDisplay = document.querySelector("#timedrift");
 
 const toggleButton = document.querySelector("#toggle");
 
-const demoParams = {
-	lookbehindMargin: 0.5,
-	lookaheadMargin: 0.5,
-	thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
-	loudSpeed: 1,
-	softSpeed: 4,
-};
+const demoParams = (() => {
+	const demoParams = {
+		lookbehindMargin: 0.5,
+		lookaheadMargin: 0.5,
+		thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+		loudSpeed: 1,
+		softSpeed: 4,
+	};
+
+	return {
+		get lookbehindMargin() { return demoParams.lookbehindMargin; },
+		get lookaheadMargin() { return demoParams.lookaheadMargin; },
+		get thresholdAmp() { return demoParams.thresholdAmp; },
+		get loudSpeed() { return demoParams.loudSpeed; },
+		get softSpeed() { return demoParams.softSpeed; },
+
+		set lookbehindMargin(value) {
+			throw new Error("not implemented");
+			demoParams.lookbehindMargin = value;
+		},
+		set lookaheadMargin(value) {
+			throw new Error("not implemented");
+			demoParams.lookaheadMargin = value;
+		},
+		set thresholdAmp(value) {
+			soloyyin.thresholdAmp = value;
+			demoParams.thresholdAmp = value; 
+		},
+		set loudSpeed(value) {
+			soloyyin.loudSpeed = value;
+			demoParams.loudSpeed = value; 
+		},
+		set softSpeed(value) {
+			soloyyin.softSpeed = value;
+			demoParams.softSpeed = value;
+		},
+	};
+})();
 
 const soloyyin = new BinarySolo(video, {
 	thresholdAmp: demoParams.thresholdAmp,
@@ -60,81 +91,7 @@ canvasContext.scale(1, -canvas.height / 2);
 canvasContext.translate(0, -1);
 canvasContext.fillStyle = "#aaa"; */
 
-
-const createParamInputs = () => {
-	const paramConverters = {
-		lookbehindMargin: {
-			validate(value) {
-				return 0 <= value && value <= 3;
-			},
-		},
-	
-		lookaheadMargin: {
-			validate(value) {
-				return 0 <= value && value <= 3;
-			},
-		},
-	
-		thresholdAmp: {
-			fromTextbox(value) {
-				return ExtremaAnalyser.ampFromDbfs(value);
-			},
-	
-			toTextbox(value) {
-				return ExtremaAnalyser.dbfsFromAmp(value);
-			},
-	
-			validate(value) {
-				return 0 <= value && value <= 1;
-			},
-		},
-	
-		loudSpeed: {
-			fromSlider(value) {
-				return 2 ** value;
-			},
-	
-			toSlider(value) {
-				return Math.log2(value);
-			},
-	
-			validate(value) {
-				return 0.125 <= value && value <= 8;
-			},
-		},
-		
-		softSpeed: {
-			fromSlider(value) {
-				return 2 ** value;
-			},
-	
-			toSlider(value) {
-				return Math.log2(value);
-			},
-	
-			validate(value) {
-				return 0.125 <= value && value <= 8;
-			},
-		},
-	};
-
-	for (const input of document.querySelectorAll(".param")) {
-		const paramName = input.getAttribute("data-param");
-		const type = input.type;
-
-		// let oldValue;
-		// input.addEventListener("input", () => {
-		// });
-
-		if (type === "range") {
-			input.value = paramConverters[paramName].toSlider?.(demoParams[paramName]) ?? demoParams[paramName];
-		} else {
-			input.value = paramConverters[paramName].toTextbox?.(demoParams[paramName]) ?? demoParams[paramName];
-		}
-	}
-};
-createParamInputs();
-
+//#region toggle button
 const initToggleButton = () => {
 	assignToggleButtonEvents();
 
@@ -157,3 +114,88 @@ const assignToggleButtonEvents = () => {
 	}, {once: true});
 };
 initToggleButton();
+//#endregion
+
+//#region param inputs
+const createParamInputs = () => {
+	const marginConverter = {
+		validate(value) {
+			return 0 <= value && value <= 3;
+		},
+	};
+
+	const speedConverter = {
+		fromSlider(value) {
+			return 2 ** value;
+		},
+		toSlider(value) {
+			return Math.log2(value);
+		},
+		validate(value) {
+			return 0.125 <= value && value <= 8;
+		},
+	};
+
+	const paramConverters = {
+		lookbehindMargin: marginConverter,
+		lookaheadMargin: marginConverter,
+	
+		thresholdAmp: {
+			fromTextbox: ExtremaAnalyser.ampFromDbfs,
+			toTextbox: ExtremaAnalyser.dbfsFromAmp,
+			validate(value) {
+				return 0 <= value && value <= 1;
+			},
+		},
+	
+		loudSpeed: speedConverter,
+		softSpeed: speedConverter,
+	};
+
+	const to = (type, paramName, value) =>
+			(type === "range"
+					? paramConverters[paramName].toSlider?.(value)
+					: paramConverters[paramName].toTextbox?.(value))
+			?? value;
+
+	const from = (type, paramName, value) =>
+			(type === "range"
+					? paramConverters[paramName].fromSlider?.(value)
+					: paramConverters[paramName].fromTextbox?.(value))
+			?? value;
+
+	const validate = (paramName, value) =>
+			paramConverters[paramName].validate?.(value) ?? true;
+
+	for (const input of document.querySelectorAll(".param")) {
+		const paramName = input.getAttribute("data-param");
+		const type = input.type;
+
+		let oldValue;
+		let validated = false;
+		input.addEventListener("input", () => {
+			const newValue = from(type, paramName, parseFloat(input.value));
+
+			if (validate(paramName, newValue)) {
+				demoParams[paramName] = newValue;
+				validated = true;
+			} else {
+				validated = false;
+			}
+		});
+
+		input.addEventListener("change", () => {
+			if (validated) {
+				oldValue = demoParams[paramName];
+			} else {
+				input.value = oldValue;
+				demoParams[paramName] = oldValue;
+			}
+			validated = false;
+		});
+
+		input.value = oldValue = to(type, paramName, demoParams[paramName]);
+	}
+};
+createParamInputs();
+//#endregion

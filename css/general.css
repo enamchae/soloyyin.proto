@@ -27,8 +27,9 @@ rule- {
 	background: currentColor;
 }
 
-[disabled] {
-	opacity: 0.75;
+[disabled],
+[data-disabled] {
+	opacity: 0.5;
 	pointer-events: none;
 }
 
