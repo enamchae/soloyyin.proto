@@ -90,8 +90,7 @@ export default class Synchronizer {
 		const correctionThreshold = () => usingSpeedCorrection ? END_CORRECTION_TIME_DRIFT : BEGIN_CORRECTION_TIME_DRIFT;
 		const timeDriftLoop = new TimeoutLoop(async now => {
 			// may be fragile
-			if (this.targetMedi.triggeringPause || this.targetMedi.paused || this.controllerMedi.paused) {
-				timeDriftLoop.stop();
+			if (this.targetMedi.triggeringPause || this.controllerMedi.triggeringPause || this.targetMedi.paused || this.controllerMedi.paused) {
 				return;
 			}
 
@@ -183,14 +182,20 @@ export default class Synchronizer {
 		};
 	}
 
-	async pitstopResyncTime() {
-		const reenable = this.stifleExternalPlayAllMedia();
+	#pitstopPromise = null;
+	pitstopResyncTime() {
+		if (this.#pitstopPromise) return this.#pitstopPromise; // temp check?
 
-		await this.pauseAllMedia();
-		await this.resyncTime();
-		await this.playAllMedia();
-
-		reenable();
+		this.#pitstopPromise = (async () => {
+			const reenable = this.stifleExternalPlayAllMedia();
+	
+			await this.pauseAllMedia();
+			await this.resyncTime();
+			await this.playAllMedia();
+	
+			reenable();
+			this.#pitstopPromise = null;
+		})();
 	}
 
 	resyncTime() {

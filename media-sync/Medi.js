@@ -35,7 +35,7 @@ export default class Medi {
 	
 	/** Alias for `playing`. */
 	static PLAYBACK_START = "playing";
-	/** Fired when playback stops (captures `pause`, and situationally `waiting` and `loadstart`). */
+	/** Fired when playback stops (captures `pause`, and conditionally `waiting`, `seeking`, and `loadstart`). */
 	static PLAYBACK_STOP = "stop";
 
 	static LOAD_BEGIN = "loadstart";
@@ -127,8 +127,7 @@ export default class Medi {
 
 		this.media.addEventListener("waiting", event => {
 			// `waiting` may fire before `playing`
-			const firedWhileStopped = this.mediaState !== MediaState.PLAYBACK_STARTED;
-
+			const firedWhilePlaying = this.mediaState === MediaState.PLAYBACK_STARTED;
 			this.mediaState = MediaState.PLAYBACK_STOPPED;
 
 			if (!this.triggeringWaiting && !this.externalPlayStifled) {
@@ -138,17 +137,20 @@ export default class Medi {
 
 			dispatchEvent(this, Medi.WAITING);
 
-			if (firedWhileStopped) {
+			if (firedWhilePlaying) {
 				dispatchEvent(this, Medi.PLAYBACK_STOP);
 			}
 		});
 
-		this.media.addEventListener("ratechange", event => {
-			dispatchEvent(this, Medi.RATECHANGE);
-		});
-
 		this.media.addEventListener("seeking", event => {
+			const firedWhilePlaying = this.mediaState === MediaState.PLAYBACK_STARTED;
+			this.mediaState = MediaState.PLAYBACK_STOPPED;
+
 			dispatchEvent(this, Medi.SEEKING);
+
+			if (firedWhilePlaying) {
+				dispatchEvent(this, Medi.PLAYBACK_STOP);
+			}
 		});
 
 		this.media.addEventListener("loadstart", event => {
@@ -160,6 +162,10 @@ export default class Medi {
 			}
 
 			dispatchEvent(this, Medi.LOAD_BEGIN);
+		});
+
+		this.media.addEventListener("ratechange", event => {
+			dispatchEvent(this, Medi.RATECHANGE);
 		});
 
 		this.media.addEventListener("loadedmetadata", () => {
@@ -184,7 +190,7 @@ export default class Medi {
 	}
 
 	async pause() {
-		if (this.triggeringPause) return;
+		if (this.triggeringPause || this.triggeringPlay) return;
 
 		// console.log("\tstart PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, new Error());
 
@@ -231,20 +237,35 @@ export default class Medi {
 				return;
 			}
 	
-			// Awaiting `play` ensures that the `pause` call does not interrupt an in-progress `play` call
+			// Try to ensure that the `pause` call does not interrupt an in-progress `play` call
 			await this.media.play();
-			
+
 			// `pause` event fires some time after calling `pause`
 			this.media.addEventListener("pause", () => {
 				resolve();
 			}, {once: true});
 			this.media.pause();
+
+/* 			const onplaying = () => {
+				// `pause` event fires some time after calling `pause`
+				this.media.addEventListener("pause", () => {
+					resolve();
+				}, {once: true});
+	
+				this.media.pause();
+			};
+
+			if (this.mediaState === MediaState.PLAYBACK_STARTED) {
+				onplaying();
+			} else {
+				this.media.addEventListener("playing", onplaying, {once: true});
+			} */
 		});
 	}
 
 	rawSeek(time) {
 		// Setting `currentTime` when paused will fire "seeking" at start, then {"timeupdate", "seeked"} and "canplay" last
-		// Setting `currentTime` when playing will fire {"seeking", "waiting"(?)} at start, then {"timeupdate", "seeked"} and {"canplay", "playing"} last
+		// Setting `currentTime` when playing will fire {"seeking", "waiting"(?)} at start, then {"timeupdate", "seeked"} and "canplay" and "playing" last
 		// Interrupting a seek will fire "seeking" again but no other duplicate events
 		return new Promise(resolve => {
 			this.media.addEventListener("seeked", () => {
@@ -330,7 +351,7 @@ export default class Medi {
 		// `preventDefault` does nothing on `play` or `playing` events
 
 		const startTime = this.time;
-		const playStiflerListener = this.on(Medi.STIFLABLE_EXTERNAL_PLAY, async () => {
+		const playStiflerListener = this.on(Medi.STIFLABLE_EXTERNAL_PLAYBACK_START, async () => {
 			await this.pause();
 			await this.seek(startTime);
 		});
