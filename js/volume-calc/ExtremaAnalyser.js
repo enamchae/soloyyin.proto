@@ -8,35 +8,37 @@ export default class ExtremaAnalyser {
 	analyser;
 	analyserBuffer;
 
-	extremizer;
+	extremizer = null;
 
-	static async construct(media, {
+	readyPromise;
+	constructor(media, {
 		sampleRate=44100, // Very low sample rates may lag at high speeds
 		fftSize=1024,
 		historyDuration,
 		sampleStepSize=16,
 	}={}) {
-		const audioContext = new AudioContext({sampleRate});
-		const audioSrc = new MediaElementAudioSourceNode(audioContext, {mediaElement: media});
-	
-		await ExtremizerNode.addToContext(audioContext);
-		const analyser = new AnalyserNode(audioContext, {fftSize});
+		this.media = media;
 
-		const extremizer = new ExtremizerNode(audioContext, {
-			sampleRate,
-			historyDuration,
-			sampleStepSize,
-		});
+		this.audioContext = new AudioContext({sampleRate});
+		const audioSrc = new MediaElementAudioSourceNode(this.audioContext, {mediaElement: media});
 	
-		audioSrc.connect(analyser).connect(extremizer);
+		this.analyser = new AnalyserNode(this.audioContext, {fftSize});
+		this.analyserBuffer = new Float32Array(this.analyser.fftSize);
 
-		return Object.assign(new ExtremaAnalyser(), {
-			media,
-			audioContext,
-			analyser,
-			analyserBuffer: new Float32Array(analyser.fftSize),
-			extremizer,
-		});
+		this.readyPromise = ExtremizerNode.addToContext(this.audioContext)
+				.then(() => {
+					this.extremizer = new ExtremizerNode(this.audioContext, {
+						sampleRate,
+						historyDuration,
+						sampleStepSize,
+					});
+				
+					audioSrc.connect(this.analyser).connect(this.extremizer);
+				});
+	}
+
+	untilReady() {
+		return this.readyPromise;
 	}
 
 	static dbfsFromAmp(amp) {
@@ -65,14 +67,27 @@ export default class ExtremaAnalyser {
 		return this.extremizer.invalidateSampleHistory();
 	}
 
-	resume() {
+	resumePromise = Promise.resolve();
+	suspendPromise = Promise.resolve();
+
+	async resume() {
+		await this.suspendPromise;
+
 		if (this.audioContext.state !== "suspended") return;
-		this.audioContext.resume();
+		this.resumePromise = this.audioContext.resume()
+				.finally(() => {
+					this.resumePromise = Promise.resolve();
+				});
 	}
 
-	suspend() {
+	async suspend() {
+		await this.resumePromise;
+
 		if (this.audioContext.state !== "running") return;
-		this.audioContext.suspend();
+		this.suspendPromise = this.audioContext.suspend()
+				.finally(() => {
+					this.suspendPromise = Promise.resolve();
+				});
 	}
 }
 
@@ -86,7 +101,7 @@ class ExtremizerNode extends AudioWorkletNode {
 	}
 
 	static addToContext(audioContext) {
-		return audioContext.audioWorklet.addModule("./volume-calc/Extremizer-audioworklet.js"); // Not a relative path?
+		return audioContext.audioWorklet.addModule("./js/volume-calc/Extremizer-audioworklet.js"); // Not a relative path?
 	}
 
 	pollExtrema() {

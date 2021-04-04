@@ -13,6 +13,9 @@ const createLookaheadMedia = media => {
 export default class Soloyyin {
 	media;
 
+	lookbehindMargin;
+	lookaheadMargin;
+
 	lookaheadMedia;
 	synchronizer;
 
@@ -21,35 +24,35 @@ export default class Soloyyin {
 	dbLoop;
 	animLoop;
 
-	static async construct(media, {
+	constructor(media, {
 		lookbehindMargin,
 		lookaheadMargin,
 
 		onIteration,
 		onAnimationFrame,
 	}={}) {
-		const lookaheadMedia = createLookaheadMedia(media);
-		const synchronizer = new TwinSync(media, lookaheadMedia, lookaheadMargin);
+		this.media = media;
 
-		const extremaAnalyser = await ExtremaAnalyser.construct(lookaheadMedia, {
-			historyDuration: lookbehindMargin + lookaheadMargin,
+		this.lookbehindMargin = lookbehindMargin;
+		this.lookaheadMargin = lookaheadMargin;
+
+		this.lookaheadMedia = createLookaheadMedia(media);
+		this.synchronizer = new TwinSync(media, this.lookaheadMedia, lookaheadMargin);
+
+		this.extremaAnalyser = new ExtremaAnalyser(this.lookaheadMedia, {
+			historyDuration: this.lookbehindMargin + this.lookaheadMargin,
 		});
 
-		const dbLoop = new TimeoutLoop(onIteration);
-		const animLoop = new AnimLoop(onAnimationFrame);
-
-		return Object.assign(new Soloyyin(), {
-			media,
-			lookaheadMedia,
-			synchronizer,
-			extremaAnalyser,
-			dbLoop,
-			animLoop,
-		});
+		this.dbLoop = new TimeoutLoop(onIteration);
+		this.animLoop = new AnimLoop(onAnimationFrame);
 	}
 
 	async start() {
-		await this.synchronizer.onReload();
+		await Promise.all([
+			this.extremaAnalyser.untilReady(),
+			this.synchronizer.onReload(),
+		]);
+
 		const unsync = this.synchronizer.sync();
 
 		const lookaheadMedi = this.synchronizer.targetMedi;
@@ -85,5 +88,41 @@ export default class Soloyyin {
 			unsync();
 			lookaheadMedi.pause();
 		};
+	}
+}
+
+export class BinarySolo extends Soloyyin {
+	thresholdAmp;
+
+	softSpeed;
+	loudSpeed;
+
+	cachedMaxAmp;
+
+	constructor(media, {
+		thresholdAmp,
+
+		softSpeed,
+		loudSpeed,
+
+		...options
+	}={}) {
+		super(media, {
+			...options,
+
+			onIteration: async () => {
+				const maxAmp = this.cachedMaxAmp = await this.extremaAnalyser.maxAmpFromExtremizer();
+
+				if (maxAmp < this.thresholdAmp) {
+					this.media.playbackRate = this.softSpeed;
+				} else {
+					this.media.playbackRate = this.loudSpeed;
+				}
+			},
+		});
+
+		this.thresholdAmp = thresholdAmp;
+		this.softSpeed = softSpeed;
+		this.loudSpeed = loudSpeed;
 	}
 }
