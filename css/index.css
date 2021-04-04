@@ -25,7 +25,8 @@ body {
 }
 
 main {
-	--primary-settings-width: 400px;
+	--control-display-width: 400px;
+	--control-settings-width: 500px;
 
 	display: flex;
 	flex-direction: column;
@@ -46,29 +47,30 @@ main > :where(#primary-control) {
 main > :where(#primary-control) > :where(section) {
 	display: flex;
 	flex-direction: column;
-	width: var(--primary-settings-width);
 	margin: 0 2em;
 }
 
 main > :where(#primary-control) > :where(#control-display) {
 	align-items: center;
+	width: var(--control-display-width);
 }
 
 main > :where(#primary-control) > :where(#control-settings) {
 	align-items: stretch;
+	width: var(--control-settings-width);
 }
 
 main > :where(#primary-control) > :where(section) > * {
 	margin-bottom: 2em;
 }
 
-:where(#settings-table) {	
-	border-spacing: 0 1em;
+:where(#settings-table) {
+	border-spacing: 0 1.5em;
 }
 
 main video {
-	max-width: var(--primary-settings-width);
-	max-height: var(--primary-settings-width);
+	max-width: var(--control-display-width);
+	max-height: var(--control-display-width);
 
 	outline: #fff dashed 2px;
 	outline-offset: .5em;
