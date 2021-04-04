@@ -1,7 +1,21 @@
+input,
 button {
 	font-size: 1em;
+	
+	outline-offset: .5em;
+}
+
+button {
 	font-weight: 700;
 	line-height: 1.5;
+}
+
+input {
+	border: 2px;
+	border-style: none none solid none;
+	
+	background: none;
+	color: currentColor;
 }
 
 rule- {
@@ -10,7 +24,7 @@ rule- {
 	height: 2px;
 	margin: 2em 4em;
 
-	background: currentcolor;
+	background: currentColor;
 }
 
 [disabled] {
@@ -28,9 +42,6 @@ th {
 }
 
 td {
-	min-width: 12em;
-	
-	font-weight: 700;
 	text-align: left;
 }
 

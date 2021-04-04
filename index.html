@@ -15,27 +15,98 @@
 
 	<body>
 		<main>
-			<section>
-				<video src="./samples/1.mp4" preload controls></video>
+			<section id="primary-control">
+				<section id="control-display">
+					<video src="./samples/1.mp4" preload controls></video>
 
+					<div>
+						<button id="toggle" disabled></button>
+					</div>
+				</section>
 
-				
-				<button id="toggle" disabled></button>
+				<section id="control-settings">
+					<!-- <div>
+						<h3>Search margins (<abbr title="seconds">s</abbr>)</h3>
+
+						<search-domain-editor>
+							<search-domain-viewer>
+								<domain-ranges>
+									<domain-excluded></domain-excluded>
+									<domain-included></domain-included>
+									<domain-excluded></domain-excluded>
+								</domain-ranges>
+						
+								<domain-handles>
+									<center-></center->
+									<handle- class="left"></handle->
+									<handle- class="right"></handle->
+								</domain-handles>
+							</search-domain-viewer>
+						
+							<search-bounds>
+								<input type="number" />
+								<input type="number" />
+							</search-bounds>
+						</search-domain-editor>
+					</div> -->
+
+					<table id="settings-table">
+						<tr>
+							<th>Lookbehind margin (<abbr title="seconds">s</abbr>)</th>
+							<td>
+								<input type="range" min="0" max="3" step="any" />
+								<input type="number" />
+							</td>
+						</tr>
+						<tr>
+							<th>Lookahead margin (<abbr title="seconds">s</abbr>)</th>
+							<td>
+								<input type="range" min="0" max="3" step="any" />
+								<input type="number" />
+							</td>
+						</tr>
+						<tr>
+							<th>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
+							<td>
+								<input type="range" min="0" max="1" step="any" />
+								<input type="number" />
+							</td>
+						</tr>
+						<tr>
+							<th>Loud playback speed</th>
+							<td>
+								<input type="range" min="-3" max="3" step="any" />
+								<input type="number" />
+							</td>
+						</tr>
+						<tr>
+							<th>Quiet playback speed</th>
+							<td>
+								<input type="range" min="-3" max="3" step="any" />
+								<input type="number" />
+							</td>
+						</tr>
+					</table>
+				</section>
 			</section>
 	
 			<rule-></rule->
 
 			<!-- <div><canvas></canvas></div> -->
-			<table>
-				<tr>
-					<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
-					<td id="db">.-.</td>
-				</tr>
-				<tr>
-					<th>Media sync time drift (<abbr title="seconds">s</abbr>)</th>
-					<td id="timedrift">._.</td>
-				</tr>
-			</table>
+			<section>
+				<h2>Debug</h2>
+
+				<table id="debug-table">
+					<tr>
+						<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
+						<td id="db">.-.</td>
+					</tr>
+					<tr>
+						<th>Media sync time drift (<abbr title="seconds">s</abbr>)</th>
+						<td id="timedrift">._.</td>
+					</tr>
+				</table>
+			</section>
 		</main>
 	</body>
 </html>

@@ -6,7 +6,7 @@
 
 body {
 	width: 100vw;
-	min-width: 300px;
+	min-width: 600px;
 	height: 100vh;
 
 	overflow-y: auto;
@@ -33,15 +33,37 @@ main {
 	text-align: center;
 }
 
-main > section {
+main > :where(section) {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	width: var(--primary-settings-width);
 }
 
-main > section > * {
+main > :where(#primary-control) {
+	flex-direction: row;
+}
+
+main > :where(#primary-control) > :where(section) {
+	display: flex;
+	flex-direction: column;
+	width: var(--primary-settings-width);
+	margin: 0 2em;
+}
+
+main > :where(#primary-control) > :where(#control-display) {
+	align-items: center;
+}
+
+main > :where(#primary-control) > :where(#control-settings) {
+	align-items: stretch;
+}
+
+main > :where(#primary-control) > :where(section) > * {
 	margin-bottom: 2em;
+}
+
+:where(#settings-table) {	
+	border-spacing: 0 1em;
 }
 
 main video {
@@ -59,3 +81,94 @@ main video {
 :where(#db).target {
 	background: #255;
 }
+
+:where(#debug-table) td {	
+	min-width: 12em;
+	
+	font-weight: 700;
+}
+
+/*
+search-domain-editor {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+search-domain-viewer {
+	display: grid;
+	height: 5em;
+	margin: 1em 0;
+	position: relative;
+}
+
+search-domain-viewer > domain-ranges {
+	grid-area: 1 / 1;
+	display: flex;
+}
+
+search-domain-viewer > domain-ranges > * {
+	flex-grow: 1;
+}
+
+search-domain-viewer > domain-ranges > domain-included {
+	background: #4488887f;
+}
+
+search-domain-viewer > domain-ranges > domain-excluded {
+	background: #8844447f;
+}
+
+search-domain-viewer > domain-handles {
+	grid-area: 1 / 1;
+}
+
+domain-handles {
+	position: relative;
+}
+
+domain-handles > * {
+	height: 100%;
+	position: absolute;
+}
+
+domain-handles > center- {
+	left: 50%;
+
+	outline: 2px dashed #ffffff7f;
+}
+
+domain-handles > handle- {
+	--offset: 0;
+
+	width: 16px;
+	border: 4px solid;
+}
+
+domain-handles > handle-:hover {
+	background: #ffffff7f;
+	cursor: ew-resize;
+}
+
+domain-handles > handle-.left {
+	right: calc(100% * (1 - var(--offset)));
+	border-left-color: #0000;
+
+	filter: drop-shadow(-4px 4px 4px #000);
+}
+
+domain-handles > handle-.right {
+	left: calc(100% * var(--offset));
+	border-right-color: #0000;
+
+	filter: drop-shadow(4px 4px 4px #000);
+}
+
+search-domain-editor > search-bounds {
+	display: flex;
+	justify-content: space-between;
+}
+
+search-domain-editor > search-bounds input {
+	width: 6em;
+} */

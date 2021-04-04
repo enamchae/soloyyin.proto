@@ -101,7 +101,7 @@ export class BinarySolo extends Soloyyin {
 	softSpeed;
 	loudSpeed;
 
-	cachedMaxAmp;
+	lastMaxAmp;
 
 	constructor(media, {
 		thresholdAmp,
@@ -115,7 +115,7 @@ export class BinarySolo extends Soloyyin {
 			...options,
 
 			onIteration: async () => {
-				const maxAmp = this.cachedMaxAmp = await this.extremaAnalyser.maxAmpFromExtremizer();
+				const maxAmp = this.lastMaxAmp = await this.extremaAnalyser.maxAmpFromExtremizer();
 
 				if (maxAmp < this.thresholdAmp) {
 					this.media.playbackRate = this.softSpeed;

@@ -37,9 +37,9 @@ const toggleButton = document.querySelector("#toggle");
 		lookaheadMargin: 0.5,
 
 		onAnimationFrame: () => {
-			const maxDbfs = ExtremaAnalyser.dbfsFromAmp(soloyyin.cachedMaxAmp);
+			const maxDbfs = ExtremaAnalyser.dbfsFromAmp(soloyyin.lastMaxAmp);
 			dbDisplay.textContent = maxDbfs;
-			dbDisplay.classList.toggle("target", soloyyin.cachedMaxAmp >= THRESHOLD_AMP);
+			dbDisplay.classList.toggle("target", soloyyin.lastMaxAmp >= THRESHOLD_AMP);
 
 			timeDriftDisplay.textContent = soloyyin.synchronizer.targetMediaTimeDrift().toFixed(6);
 
