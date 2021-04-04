@@ -57,18 +57,14 @@ export default class Soloyyin {
 		let stopperListener;
 		const listeners = [
 			lookaheadMedi.on(Medi.PLAYBACK_START, event => {
-				if (this.extremaAnalyser.audioContext.state === "suspended") {
-					this.extremaAnalyser.audioContext.resume();
-				}
+				this.extremaAnalyser.resume();
 		
 				this.dbLoop.start();
 				this.animLoop.start();
 			}),
 		
 			stopperListener = lookaheadMedi.on(Medi.PLAYBACK_STOP, event => {
-				if (this.extremaAnalyser.audioContext.state === "running") {
-					this.extremaAnalyser.audioContext.suspend();
-				}
+				this.extremaAnalyser.suspend();
 	
 				this.dbLoop.stop();
 				this.animLoop.stop();

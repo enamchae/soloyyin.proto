@@ -64,6 +64,16 @@ export default class ExtremaAnalyser {
 	invalidateSampleHistory() {
 		return this.extremizer.invalidateSampleHistory();
 	}
+
+	resume() {
+		if (this.audioContext.state !== "suspended") return;
+		this.audioContext.resume();
+	}
+
+	suspend() {
+		if (this.audioContext.state !== "running") return;
+		this.audioContext.suspend();
+	}
 }
 
 class ExtremizerNode extends AudioWorkletNode {
