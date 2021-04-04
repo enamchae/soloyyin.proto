@@ -177,35 +177,24 @@ export default class Medi {
 		});
 	}
 
+	// TODO `pause` has a chance of raising an uncatchable "The play() request was interrupted by a call to pause()"
+	// error despite the await statement on the controller medi. (The easiest way to cause this is to seek very quickly,
+	// even by clicking the same spot repeatedly.) The `pause` call occurs after the `playing` event is fired
+	// (when the `play` call resolves), so I don't know how to further gurantee that it will be safe to call `pause`.
+
 	async play() {
-		if (this.triggeringPlay) return;
-
-		// console.log("\tstart PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
-
 		this.triggeringPlay = true;
 		await this.rawPlay();
 		this.triggeringPlay = false;
-
-		// console.log("\tdone PLAY", this.media.attributes.getNamedItem("!!controller") ? 1 : 2);
 	}
 
 	async pause() {
-		if (this.triggeringPause || this.triggeringPlay) return;
-
-		// console.log("\tstart PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, new Error());
-
-		this.triggeringPlay = true;
 		this.triggeringPause = true;
 		await this.rawPause();
-		this.triggeringPlay = false;
 		this.triggeringPause = false;
-
-		// console.log("\tdone PAUSE", this.media.attributes.getNamedItem("!!controller") ? 1 : 2, this.media.paused);
 	}
 
 	async seek(time) {
-		if (this.awaitingSeeked) return;
-
 		this.awaitingSeeked = true;
 		await this.rawSeek(time);
 		this.awaitingSeeked = false;
@@ -238,28 +227,11 @@ export default class Medi {
 			}
 	
 			// Try to ensure that the `pause` call does not interrupt an in-progress `play` call
-			await this.media.play();
+			await this.play();
 
 			// `pause` event fires some time after calling `pause`
-			this.media.addEventListener("pause", () => {
-				resolve();
-			}, {once: true});
+			this.media.addEventListener("pause", () => resolve(), {once: true});
 			this.media.pause();
-
-/* 			const onplaying = () => {
-				// `pause` event fires some time after calling `pause`
-				this.media.addEventListener("pause", () => {
-					resolve();
-				}, {once: true});
-	
-				this.media.pause();
-			};
-
-			if (this.mediaState === MediaState.PLAYBACK_STARTED) {
-				onplaying();
-			} else {
-				this.media.addEventListener("playing", onplaying, {once: true});
-			} */
 		});
 	}
 

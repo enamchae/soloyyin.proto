@@ -26,7 +26,7 @@ export default class Synchronizer {
 	}
 	
 	onReload() {
-		const reenable = this.stifleExternalPlayAllMedia();
+		const reenable = this.stifleControllerExternalPlay();
 
 		return this.continueLoadAllMedia()
 				.finally(() => { reenable(); })
@@ -171,31 +171,24 @@ export default class Synchronizer {
 		]);
 	}
 
-	stifleExternalPlayAllMedia() {
-		const reenablers = [
-			this.controllerMedi.stifleExternalPlay(),
-			this.targetMedi.stifleExternalPlay(),
-		];
-
-		return () => {
-			reenablers.map(reenable => reenable());
-		};
+	stifleControllerExternalPlay() {
+		return this.controllerMedi.stifleExternalPlay();
 	}
 
 	#pitstopPromise = null;
 	pitstopResyncTime() {
 		if (this.#pitstopPromise) return this.#pitstopPromise; // temp check?
 
+		const reenable = this.stifleControllerExternalPlay();
+
 		this.#pitstopPromise = (async () => {
-			const reenable = this.stifleExternalPlayAllMedia();
-	
 			await this.pauseAllMedia();
 			await this.resyncTime();
 			await this.playAllMedia();
-	
+		})().finally(() => {
 			reenable();
 			this.#pitstopPromise = null;
-		})();
+		});
 	}
 
 	resyncTime() {
@@ -214,7 +207,7 @@ export default class Synchronizer {
 export class TwinSync extends Synchronizer {
 	onReload() {
 		return new Promise(resolve => {
-			const reenable = this.stifleExternalPlayAllMedia();
+			const reenable = this.stifleControllerExternalPlay();
 			
 			// By the time `loadedmetadata` fires, the `currentSrc` property will have updated;
 			// this is not the case with MutationObserver.
