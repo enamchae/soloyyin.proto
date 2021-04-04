@@ -20,8 +20,8 @@ const drawTimeDomain = analyserBuffer => {
 	});
 }; */
 
-const dbDisplay = document.querySelector(".db");
-const timeDriftDisplay = document.querySelector(".timedrift");
+const dbDisplay = document.querySelector("#db");
+const timeDriftDisplay = document.querySelector("#timedrift");
 
 const THRESHOLD_AMP = ExtremaAnalyser.ampFromDbfs(-16);
 

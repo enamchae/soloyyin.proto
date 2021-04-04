@@ -4,23 +4,38 @@
 	<head>
 		<meta charset="UTF-8" />
 
+		<title>Soloyyin demo</title>
+
 		<script src="./js/index.js" type="module"></script>
 
 		<link rel="stylesheet" href="./css/index.css" />
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass+Mono:wght@400;800&display=swap" />
+		<link rel="stylesheet" href="./css/general.css" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass+Mono:wght@400;700&display=swap" />
 	</head>
 
 	<body>
 		<main>
-			<div><video src="./samples/1.mp4" preload controls></video></div>
+			<section>
+				<video src="./samples/1.mp4" preload controls></video>
+
+
+				
+				<button id="toggle" disabled></button>
+			</section>
 	
 			<rule-></rule->
 
 			<!-- <div><canvas></canvas></div> -->
-			<div class="db">.-.</div>
-			<div class="timedrift">._.</div>
-
-			<div><button id="toggle" disabled></button></div>
+			<table>
+				<tr>
+					<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
+					<td id="db">.-.</td>
+				</tr>
+				<tr>
+					<th>Media sync time drift (<abbr title="seconds">s</abbr>)</th>
+					<td id="timedrift">._.</td>
+				</tr>
+			</table>
 		</main>
 	</body>
 </html>

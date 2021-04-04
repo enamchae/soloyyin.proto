@@ -1,0 +1,39 @@
+button {
+	font-size: 1em;
+	font-weight: 700;
+	line-height: 1.5;
+}
+
+rule- {
+	display: block;
+	width: 100%;
+	height: 2px;
+	margin: 2em 4em;
+
+	background: currentcolor;
+}
+
+[disabled] {
+	opacity: 0.75;
+	pointer-events: none;
+}
+
+th,
+td {
+	padding: .15em .5em;
+}
+
+th {
+	text-align: right;
+}
+
+td {
+	min-width: 12em;
+	
+	font-weight: 700;
+	text-align: left;
+}
+
+abbr {
+	cursor: help;
+}

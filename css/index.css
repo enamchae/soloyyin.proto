@@ -1,9 +1,7 @@
 * {
 	box-sizing: border-box;
-}
-
-html {
-	margin: 0;
+	font-family: Ubuntu Mono, Ubuntu, sans-serif;
+	font-weight: 400;
 }
 
 body {
@@ -16,43 +14,48 @@ body {
 	margin: 0;
 	padding: 80px;
 
-	background: repeating-linear-gradient(135deg, #222326 0 30px, #28292c 30px 60px);
+	line-height: 1.25;
+
+	--bg-stripe-size: 20px;
+	background: repeating-linear-gradient(135deg,
+			#222326 0 var(--bg-stripe-size),
+			#28292c var(--bg-stripe-size) calc(2 * var(--bg-stripe-size))
+	);
 	color: #fff;
-	font-family: Ubuntu Mono, Ubuntu, sans-serif;
 }
 
 main {
+	--primary-settings-width: 400px;
+
 	display: flex;
 	flex-direction: column;
-	align-items: stretch;
+	align-items: center;
 	text-align: center;
 }
 
-video {
-	max-width: 400px;
+main > section {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: var(--primary-settings-width);
 }
 
-.db {
+main > section > * {
+	margin-bottom: 2em;
+}
+
+main video {
+	max-width: var(--primary-settings-width);
+	max-height: var(--primary-settings-width);
+
+	outline: #fff dashed 2px;
+	outline-offset: .5em;
+}
+
+:where(#db) {
 	background: #522;
 }
 
-.db.target {
+:where(#db).target {
 	background: #255;
-}
-
-button {
-	line-height: 1.5;
-}
-
-rule- {
-	display: block;
-	height: 2px;
-	margin: 2em 4em;
-
-	background: currentcolor;
-}
-
-[disabled] {
-	opacity: 0.5;
-	pointer-events: none;
 }
