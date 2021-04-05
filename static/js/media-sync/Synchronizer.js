@@ -181,19 +181,19 @@ export default class Synchronizer {
 		return this.controllerMedi.stifleExternalPlay();
 	}
 
-	#pitstopPromise = null;
+	pitstopPromise = null;
 	pitstopResyncTime() {
-		if (this.#pitstopPromise) return this.#pitstopPromise; // temp check?
+		if (this.pitstopPromise) return this.pitstopPromise; // temp check?
 
 		// const reenable = this.stifleControllerExternalPlay();
 
-		this.#pitstopPromise = (async () => {
+		this.pitstopPromise = (async () => {
 			await this.pauseAllMedia();
 			await this.resyncTime();
 			await this.playAllMedia();
 		})().finally(() => {
 			// reenable();
-			this.#pitstopPromise = null;
+			this.pitstopPromise = null;
 		});
 	}
 
