@@ -117,6 +117,11 @@ initToggleButton();
 //#endregion
 
 //#region param inputs
+const MAX_N_FRACTION_DIGITS = 4;
+const roundF32 = f32 => {
+	return Number(f32.toFixed(MAX_N_FRACTION_DIGITS));
+};
+
 const createParamInputs = () => {
 	const marginConverter = {
 		validate(value) {
@@ -125,6 +130,7 @@ const createParamInputs = () => {
 	};
 
 	const speedConverter = {
+		toTextbox: roundF32,
 		fromSlider(value) {
 			return 2 ** value;
 		},
@@ -136,48 +142,63 @@ const createParamInputs = () => {
 		},
 	};
 
-	const paramConverters = {
-		lookbehindMargin: marginConverter,
-		lookaheadMargin: marginConverter,
+	const paramConverters = new Map([
+		["lookbehindMargin", marginConverter],
+		["lookaheadMargin", marginConverter],
 	
-		thresholdAmp: {
+		["thresholdAmp", {
 			fromTextbox: ExtremaAnalyser.ampFromDbfs,
-			toTextbox: ExtremaAnalyser.dbfsFromAmp,
+			toTextbox(value) {
+				return roundF32(ExtremaAnalyser.dbfsFromAmp(value));
+			},
 			validate(value) {
 				return 0 <= value && value <= 1;
 			},
-		},
+		}],
 	
-		loudSpeed: speedConverter,
-		softSpeed: speedConverter,
-	};
+		["loudSpeed", speedConverter],
+		["softSpeed", speedConverter],
+	]);
+
+	const oldValues = new Map();
 
 	const to = (type, paramName, value) =>
 			(type === "range"
-					? paramConverters[paramName].toSlider?.(value)
-					: paramConverters[paramName].toTextbox?.(value))
+					? paramConverters.get(paramName).toSlider?.(value)
+					: paramConverters.get(paramName).toTextbox?.(value))
 			?? value;
 
 	const from = (type, paramName, value) =>
 			(type === "range"
-					? paramConverters[paramName].fromSlider?.(value)
-					: paramConverters[paramName].fromTextbox?.(value))
+					? paramConverters.get(paramName).fromSlider?.(value)
+					: paramConverters.get(paramName).fromTextbox?.(value))
 			?? value;
 
 	const validate = (paramName, value) =>
-			paramConverters[paramName].validate?.(value) ?? true;
+			paramConverters.get(paramName).validate?.(value) ?? true;
+
+	const update = (paramName, value, exceptInput=null) => {
+		demoParams[paramName] = value;
+		for (const input of document.querySelectorAll(`[data-param=${paramName}]`)) {
+			if (input === exceptInput) continue;
+			input.value = to(input.type, paramName, value);
+		}
+	};
 
 	for (const input of document.querySelectorAll(".param")) {
 		const paramName = input.getAttribute("data-param");
 		const type = input.type;
 
-		let oldValue;
+		if (!oldValues.has(paramName)) {
+			oldValues.set(paramName, demoParams[paramName]);
+		}
+
 		let validated = false;
 		input.addEventListener("input", () => {
 			const newValue = from(type, paramName, parseFloat(input.value));
 
 			if (validate(paramName, newValue)) {
-				demoParams[paramName] = newValue;
+				update(paramName, newValue, input);
 				validated = true;
 			} else {
 				validated = false;
@@ -186,15 +207,14 @@ const createParamInputs = () => {
 
 		input.addEventListener("change", () => {
 			if (validated) {
-				oldValue = demoParams[paramName];
+				oldValues.set(paramName, demoParams[paramName]);
 			} else {
-				input.value = oldValue;
-				demoParams[paramName] = oldValue;
+				update(paramName, oldValues.get(paramName));
 			}
 			validated = false;
 		});
 
-		input.value = oldValue = to(type, paramName, demoParams[paramName]);
+		input.value = to(type, paramName, demoParams[paramName]);
 	}
 };
 createParamInputs();
