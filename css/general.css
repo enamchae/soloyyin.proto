@@ -10,7 +10,7 @@ button {
 	line-height: 1.5;
 }
 
-input {
+input:is([type="number"], [type="text"]) {
 	border: 2px;
 	border-style: none none solid none;
 	

@@ -20,11 +20,6 @@ const drawTimeDomain = analyserBuffer => {
 	});
 }; */
 
-const dbDisplay = document.querySelector("#db");
-const timeDriftDisplay = document.querySelector("#timedrift");
-
-const toggleButton = document.querySelector("#toggle");
-
 const demoParams = (() => {
 	const demoParams = {
 		lookbehindMargin: 0.5,
@@ -64,6 +59,9 @@ const demoParams = (() => {
 	};
 })();
 
+const dbDisplay = document.querySelector("#db");
+const timeDriftDisplay = document.querySelector("#timedrift");
+
 const soloyyin = new BinarySolo(video, {
 	thresholdAmp: demoParams.thresholdAmp,
 	softSpeed: demoParams.softSpeed,
@@ -91,135 +89,162 @@ canvasContext.scale(1, -canvas.height / 2);
 canvasContext.translate(0, -1);
 canvasContext.fillStyle = "#aaa"; */
 
+//#region media upload
+{
+	const mediaInput = document.querySelector("#media-upload");
+
+	let currentUrl = "";
+	mediaInput.addEventListener("change", () => {
+		const file = mediaInput.files[0];
+		if (!file) return;
+
+		if (currentUrl) {
+			URL.revokeObjectURL(currentUrl);
+		}
+
+		currentUrl = URL.createObjectURL(file);
+		video.src = currentUrl;
+
+		mediaInput.value = "";
+	});
+}
+//#endregion
+
 //#region toggle button
-const initToggleButton = () => {
-	assignToggleButtonEvents();
+{
+	const toggleButton = document.querySelector("#toggle");
 
-	toggleButton.disabled = false;
-	toggleButton.textContent = "▶ Start tracking";
-	toggleButton.classList.remove("enabled");
-};
-const assignToggleButtonEvents = () => {
-	toggleButton.addEventListener("click", async () => {
-		toggleButton.disabled = true;
-		toggleButton.textContent = "❚❚ Stop tracking";
-		toggleButton.classList.add("enabled");
+	const initToggleButton = () => {
+		assignToggleButtonEvents();
 
-		const stop = await soloyyin.start();
-
-		toggleButton.addEventListener("click", () => {
-			initToggleButton();
-			stop();
-		}, {once: true});
-		
 		toggleButton.disabled = false;
-	}, {once: true});
-};
-initToggleButton();
+		toggleButton.textContent = "▶ Start tracking";
+		toggleButton.classList.remove("enabled");
+	};
+	const assignToggleButtonEvents = () => {
+		toggleButton.addEventListener("click", async () => {
+			toggleButton.disabled = true;
+			toggleButton.textContent = "❚❚ Stop tracking";
+			toggleButton.classList.add("enabled");
+
+			const stop = await soloyyin.start();
+
+			toggleButton.addEventListener("click", () => {
+				initToggleButton();
+				stop();
+			}, {once: true});
+			
+			toggleButton.disabled = false;
+		}, {once: true});
+	};
+	initToggleButton();
+}
 //#endregion
 
 //#region param inputs
-const MAX_N_FRACTION_DIGITS = 4;
-const roundF32 = f32 => {
-	return Number(f32.toFixed(MAX_N_FRACTION_DIGITS));
-};
-
-const createParamInputs = () => {
-	const marginConverter = {
-		validate(value) {
-			return 0 <= value && value <= 3;
-		},
+{
+	const MAX_N_FRACTION_DIGITS = 4;
+	const roundF32 = f32 => {
+		return Number(f32.toFixed(MAX_N_FRACTION_DIGITS));
 	};
-
-	const speedConverter = {
-		toTextbox: roundF32,
-		fromSlider(value) {
-			return 2 ** value;
-		},
-		toSlider(value) {
-			return Math.log2(value);
-		},
-		validate(value) {
-			return 0.25 <= value && value <= 4;
-		},
-	};
-
-	const paramConverters = new Map([
-		["lookbehindMargin", marginConverter],
-		["lookaheadMargin", marginConverter],
 	
-		["thresholdAmp", {
-			fromTextbox: ExtremaAnalyser.ampFromDbfs,
-			toTextbox(value) {
-				return roundF32(ExtremaAnalyser.dbfsFromAmp(value));
+	const createParamInputs = () => {
+		const marginConverter = {
+			validate(value) {
+				return 0 <= value && value <= 3;
+			},
+		};
+	
+		const speedConverter = {
+			toTextbox: roundF32,
+			fromSlider(value) {
+				return 2 ** value;
+			},
+			toSlider(value) {
+				return Math.log2(value);
 			},
 			validate(value) {
-				return 0 <= value && value <= 1;
+				return 0.25 <= value && value <= 4;
 			},
-		}],
+		};
 	
-		["loudSpeed", speedConverter],
-		["softSpeed", speedConverter],
-	]);
-
-	const oldValues = new Map();
-
-	const to = (type, paramName, value) =>
-			(type === "range"
-					? paramConverters.get(paramName).toSlider?.(value)
-					: paramConverters.get(paramName).toTextbox?.(value))
-			?? value;
-
-	const from = (type, paramName, value) =>
-			(type === "range"
-					? paramConverters.get(paramName).fromSlider?.(value)
-					: paramConverters.get(paramName).fromTextbox?.(value))
-			?? value;
-
-	const validate = (paramName, value) =>
-			paramConverters.get(paramName).validate?.(value) ?? true;
-
-	const update = (paramName, value, exceptInput=null) => {
-		demoParams[paramName] = value;
-		for (const input of document.querySelectorAll(`[data-param=${paramName}]`)) {
-			if (input === exceptInput) continue;
-			input.value = to(input.type, paramName, value);
-		}
-	};
-
-	for (const input of document.querySelectorAll(".param")) {
-		const paramName = input.getAttribute("data-param");
-		const type = input.type;
-
-		if (!oldValues.has(paramName)) {
-			oldValues.set(paramName, demoParams[paramName]);
-		}
-
-		let validated = false;
-		input.addEventListener("input", () => {
-			const newValue = from(type, paramName, parseFloat(input.value));
-
-			if (validate(paramName, newValue)) {
-				update(paramName, newValue, input);
-				validated = true;
-				input.parentElement.classList.remove("error");
-			} else {
-				validated = false;
-				input.parentElement.classList.add("error");
+		const paramConverters = new Map([
+			["lookbehindMargin", marginConverter],
+			["lookaheadMargin", marginConverter],
+		
+			["thresholdAmp", {
+				fromTextbox: ExtremaAnalyser.ampFromDbfs,
+				toTextbox(value) {
+					return roundF32(ExtremaAnalyser.dbfsFromAmp(value));
+				},
+				validate(value) {
+					return 0 <= value && value <= 1;
+				},
+			}],
+		
+			["loudSpeed", speedConverter],
+			["softSpeed", speedConverter],
+		]);
+	
+		const oldValues = new Map();
+	
+		const to = (type, paramName, value) =>
+				(type === "range"
+						? paramConverters.get(paramName).toSlider?.(value)
+						: paramConverters.get(paramName).toTextbox?.(value))
+				?? value;
+	
+		const from = (type, paramName, value) =>
+				(type === "range"
+						? paramConverters.get(paramName).fromSlider?.(value)
+						: paramConverters.get(paramName).fromTextbox?.(value))
+				?? value;
+	
+		const validate = (paramName, value) =>
+				paramConverters.get(paramName).validate?.(value) ?? true;
+	
+		const update = (paramName, value, exceptInput=null) => {
+			demoParams[paramName] = value;
+			for (const input of document.querySelectorAll(`[data-param=${paramName}]`)) {
+				if (input === exceptInput) continue;
+				input.value = to(input.type, paramName, value);
 			}
-		});
-
-		input.addEventListener("change", () => {
-			if (validated) {
+		};
+	
+		for (const input of document.querySelectorAll(".param")) {
+			const paramName = input.getAttribute("data-param");
+			const type = input.type;
+	
+			if (!oldValues.has(paramName)) {
 				oldValues.set(paramName, demoParams[paramName]);
 			}
-			update(paramName, oldValues.get(paramName));
-			input.parentElement.classList.remove("error");
-			validated = false;
-		});
-
-		input.value = to(type, paramName, demoParams[paramName]);
-	}
-};
-createParamInputs();
+	
+			let validated = false;
+			input.addEventListener("input", () => {
+				const newValue = from(type, paramName, parseFloat(input.value));
+	
+				if (validate(paramName, newValue)) {
+					update(paramName, newValue, input);
+					validated = true;
+					input.parentElement.classList.remove("error");
+				} else {
+					validated = false;
+					input.parentElement.classList.add("error");
+				}
+			});
+	
+			input.addEventListener("change", () => {
+				if (validated) {
+					oldValues.set(paramName, demoParams[paramName]);
+				}
+				update(paramName, oldValues.get(paramName));
+				input.parentElement.classList.remove("error");
+				validated = false;
+			});
+	
+			input.value = to(type, paramName, demoParams[paramName]);
+		}
+	};
+	createParamInputs();
+}
 //#endregion

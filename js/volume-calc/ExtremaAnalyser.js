@@ -20,6 +20,7 @@ export default class ExtremaAnalyser {
 		this.media = media;
 
 		this.audioContext = new AudioContext({sampleRate});
+		this.suspend();
 		const audioSrc = new MediaElementAudioSourceNode(this.audioContext, {mediaElement: media});
 	
 		this.analyser = new AnalyserNode(this.audioContext, {fftSize});

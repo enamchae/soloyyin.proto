@@ -17,7 +17,9 @@
 		<main>
 			<section id="primary-control">
 				<section id="control-display">
-					<video src="./samples/1.mp4" preload controls></video>
+					<input id="media-upload" type="file" />
+
+					<video src="" preload controls></video>
 
 					<div>
 						<button id="toggle" disabled></button>
@@ -94,16 +96,14 @@
 
 			<!-- <div><canvas></canvas></div> -->
 			<section>
-				<h2>Debug</h2>
-
 				<table id="debug-table">
 					<tr>
 						<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
-						<td id="db">.-.</td>
+						<td id="db">…</td>
 					</tr>
 					<tr>
 						<th>Media sync time drift (<abbr title="seconds">s</abbr>)</th>
-						<td id="timedrift">._.</td>
+						<td id="timedrift">…</td>
 					</tr>
 				</table>
 			</section>
