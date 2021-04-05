@@ -52,14 +52,14 @@
 
 					<table id="settings-table">
 						<tr data-disabled>
-							<th>Lookbehind margin (<abbr title="seconds">s</abbr>)</th>
+							<th>Realtime lookbehind margin (<abbr title="seconds">s</abbr>)</th>
 							<td>
 								<input type="range" min="0" max="3" step="any" data-param="lookaheadMargin" class="param" />
 								<input type="number" data-param="lookaheadMargin" class="param" />
 							</td>
 						</tr>
 						<tr data-disabled>
-							<th>Lookahead margin (<abbr title="seconds">s</abbr>)</th>
+							<th>Realtime lookahead margin (<abbr title="seconds">s</abbr>)</th>
 							<td>
 								<input type="range" min="0" max="3" step="any" data-param="lookbehindMargin" class="param" />
 								<input type="number" data-param="lookbehindMargin" class="param" />
@@ -75,15 +75,15 @@
 						<tr>
 							<th>Loud playback speed</th>
 							<td>
-								<input type="range" min="-3" max="3" step="any" data-param="loudSpeed" class="param" />
-								<input type="number" data-param="loudSpeed" class="param" />
+								<input type="range" min="-2" max="2" step="any" data-param="loudSpeed" class="param" />
+								<input type="text" step="any" data-param="loudSpeed" class="param" />
 							</td>
 						</tr>
 						<tr>
 							<th>Quiet playback speed</th>
 							<td>
-								<input type="range" min="-3" max="3" step="any" data-param="softSpeed" class="param" />
-								<input type="number" data-param="softSpeed" class="param" />
+								<input type="range" min="-2" max="2" step="any" data-param="softSpeed" class="param" />
+								<input type="text" step="any" data-param="softSpeed" class="param" />
 							</td>
 						</tr>
 					</table>

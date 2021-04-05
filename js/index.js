@@ -97,11 +97,13 @@ const initToggleButton = () => {
 
 	toggleButton.disabled = false;
 	toggleButton.textContent = "▶ Start tracking";
+	toggleButton.classList.remove("enabled");
 };
 const assignToggleButtonEvents = () => {
 	toggleButton.addEventListener("click", async () => {
 		toggleButton.disabled = true;
 		toggleButton.textContent = "❚❚ Stop tracking";
+		toggleButton.classList.add("enabled");
 
 		const stop = await soloyyin.start();
 
@@ -138,7 +140,7 @@ const createParamInputs = () => {
 			return Math.log2(value);
 		},
 		validate(value) {
-			return 0.125 <= value && value <= 8;
+			return 0.25 <= value && value <= 4;
 		},
 	};
 
@@ -200,17 +202,19 @@ const createParamInputs = () => {
 			if (validate(paramName, newValue)) {
 				update(paramName, newValue, input);
 				validated = true;
+				input.parentElement.classList.remove("error");
 			} else {
 				validated = false;
+				input.parentElement.classList.add("error");
 			}
 		});
 
 		input.addEventListener("change", () => {
 			if (validated) {
 				oldValues.set(paramName, demoParams[paramName]);
-			} else {
-				update(paramName, oldValues.get(paramName));
 			}
+			update(paramName, oldValues.get(paramName));
+			input.parentElement.classList.remove("error");
 			validated = false;
 		});
 

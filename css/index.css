@@ -64,8 +64,35 @@ main > :where(#primary-control) > :where(section) > * {
 	margin-bottom: 2em;
 }
 
+:where(#toggle) {
+	border-radius: .25em;
+	box-shadow: 0 0 0 4px #f66;
+}
+
+@keyframes pulse {
+	from {
+		box-shadow: 0 0 0 4px #1ab;
+	}
+
+	to {
+		box-shadow: 0 0 0 8px #6ff;
+	}
+}
+
+:where(#toggle).enabled {
+	animation: pulse 2s ease-in-out infinite alternate;
+}
+
 :where(#settings-table) {
 	border-spacing: 0 1.5em;
+}
+
+:where(#settings-table) input {
+	width: 100%;
+}
+
+:where(#settings-table) .error {
+	color: #f66;
 }
 
 main video {
