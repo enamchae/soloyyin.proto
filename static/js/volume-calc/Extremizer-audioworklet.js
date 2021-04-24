@@ -12,6 +12,9 @@ const takeStep = function* (iterable, step=1) {
 	}
 };
 
+/**
+ * Rolling array with methods for calculating extrema.
+ */
 // Separation of concerns
 class ExtremizerRollingArray extends RollingF32Array {
 	lastPolledIndex = -1;
@@ -47,6 +50,9 @@ class ExtremizerRollingArray extends RollingF32Array {
 	} */
 }
 
+/**
+ * Destination processor which records the latest incoming sample history to compute its extrema.
+ */
 class ExtremizerProcessor extends AudioWorkletProcessor {
 	sampleHistory;
 	sampleHistoryLength;

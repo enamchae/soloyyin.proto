@@ -1,5 +1,8 @@
 const mod = (a, b) => (a % b + b) % b;
 
+/**
+ * Fixed-length float32 array that functions as a queue.
+ */
 export default class RollingF32Array {
 	array;
 

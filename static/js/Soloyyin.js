@@ -10,6 +10,9 @@ const createLookaheadMedia = media => {
 	return lookaheadMedia;
 };
 
+/**
+ * Handles both looking ahead in a media element's audio and calculating its recent sample extrema.
+ */
 export default class Soloyyin {
 	media;
 
@@ -95,6 +98,9 @@ export default class Soloyyin {
 	teardown() {}
 }
 
+/**
+ * Alternates a media element's playback rate between two speeds, based on its recent loudness.
+ */
 export class BinarySolo extends Soloyyin {
 	thresholdAmp;
 

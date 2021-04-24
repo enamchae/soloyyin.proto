@@ -1,5 +1,8 @@
 import ExtremizerConsts from "./Extremizer-consts.js";
 
+/**
+ * Stores an `AudioContext` meant to process a media element's audio for its recent sample extrema.
+ */
 export default class ExtremaAnalyser {
 	media;
 
@@ -92,6 +95,9 @@ export default class ExtremaAnalyser {
 	}
 }
 
+/**
+ * Destination node that provides an interface for `ExtremizerProcessor`.
+ */
 class ExtremizerNode extends AudioWorkletNode {
 	constructor(audioContext, processorOptions) {
 		super(audioContext, ExtremizerConsts.processorName, {

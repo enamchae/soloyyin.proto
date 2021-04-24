@@ -11,6 +11,9 @@ const MAX_SPEED = 16;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+/**
+ * Attempts to keep two media elements matched at the same time, with a given offset.
+ */
 export default class Synchronizer {
 	controllerMedi;
 	targetMedi;
@@ -210,6 +213,9 @@ export default class Synchronizer {
 	}
 }
 
+/**
+ * Synchronizer that also attempts to match the media's source URLs.
+ */
 export class TwinSync extends Synchronizer {
 	onReload() {
 		return new Promise(resolve => {

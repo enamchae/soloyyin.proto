@@ -38,8 +38,11 @@ export default class Medi {
 	/** Fired when playback stops (captures `pause`, and conditionally `waiting`, `seeking`, and `loadstart`). */
 	static PLAYBACK_STOP = "stop";
 
+	/** Alias for `loadstart`. */
 	static LOAD_BEGIN = "loadstart";
+	/** Alias for `loadedmetadata`. */
 	static LOAD_METADATA_END = "loadedmetadata";
+	/** Alias for `loadeddata`. */
 	static LOAD_END = "loadeddata";
 
 	// static SRC_URL_CHANGE = "srcurlchange";
