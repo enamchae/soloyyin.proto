@@ -1,3 +1,3 @@
 echo Refreshing copies of lib…
 
-bash webdemo/copy-lib.sh
+bash _build/webdemo/copy-lib.sh
