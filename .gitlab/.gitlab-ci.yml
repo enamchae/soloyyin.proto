@@ -1,10 +1,11 @@
 pages:
     stage: deploy
     script:
-    - mkdir public
-    - cp -r static/* public
+        - bash _build/webdemo/copy-lib.sh
+        - mkdir public
+        - cp -r webdemo-static/* public
     artifacts:
         paths:
-        - public
+            - public
     only:
-    - master
+        - master

@@ -1,0 +1,8 @@
+# npm
+node_modules
+package-lock.json
+
+# pre-build
+webdemo-static/js/.lib
+
+# build result
