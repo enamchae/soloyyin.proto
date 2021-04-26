@@ -1,5 +1,3 @@
-"use strict";
-
 const userPickNewMedia = () => {
 	return new Promise(resolve => {
 		const onclick = event => {
@@ -19,14 +17,18 @@ const userPickNewMedia = () => {
 	});
 };
 
-browser.runtime.onMessage.addListener(async (message, sender) => {
-	switch (message) {
-		case "pick-new-media":
-			const media = await userPickNewMedia();
-			console.log(media);
-			break;
+(async () => {
+	browser.runtime.onMessage.addListener(async (message, sender) => {
+		switch (message) {
+			case "pick-new-media": {
+				const media = await userPickNewMedia();
+				console.log(media);
 
-		default:
-			throw new TypeError();
-	}
-});
+				break;
+			}
+				
+			default:
+				throw new TypeError();
+		}
+	});
+})();

@@ -4,5 +4,6 @@ package-lock.json
 
 # pre-build
 webdemo-static/js/.lib
+webext/js/.lib
 
 # build result

@@ -4,7 +4,8 @@
 	"description": "",
 	"scripts": {
 		"copy-lib": "bash _build/copy-lib.sh",
-		"autorefresh-lib": "nodemon --watch lib -x \"npm run copy-lib\""
+		"autorefresh-lib": "nodemon --watch lib -x \"npm run copy-lib\"",
+		"webext-run": "cd webext && web-ext run"
 	},
 	"devDependencies": {
 		"nodemon": "^2.0.7",
