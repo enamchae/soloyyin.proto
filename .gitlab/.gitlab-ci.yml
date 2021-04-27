@@ -1,9 +1,38 @@
+image: node:latest
+
+cache:
+    paths:
+        - node_modules/
+
+stages:
+    - setup
+    - build
+    - deploy
+
+setup:
+    stage: setup
+    script:
+        - npm install
+    artifacts:
+        paths:
+            - node_modules/
+    only:
+        - master
+
+build:
+    stage: build
+    script: 
+        - npm run webdemo-build
+    artifacts:
+        paths:
+            - .webdemo-dist/
+    only:
+        - master
+
 pages:
     stage: deploy
     script:
-        - bash build/webdemo/copy-lib.sh
-        - mkdir public
-        - cp -r webdemo-static/* public
+        - mv .webdemo-dist public
     artifacts:
         paths:
             - public
