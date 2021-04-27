@@ -22,8 +22,8 @@ const drawTimeDomain = analyserBuffer => {
 
 const demoParams = (() => {
 	const demoParams = {
-		lookbehindMargin: 0.5,
-		lookaheadMargin: 0.5,
+		lookbehindMargin: 0.125,
+		lookaheadMargin: 0.125,
 		thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
 		loudSpeed: 1,
 		softSpeed: 4,

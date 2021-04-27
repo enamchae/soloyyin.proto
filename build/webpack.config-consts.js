@@ -1,6 +1,6 @@
 export default {
-	mode: "production",
-	devtool: process.env.NODE_ENV === "development" ? "source-map" : false,
+	mode: process.env.NODE_ENV,
+	devtool: process.env.NODE_ENV === "development" ? "eval" : false,
 	resolve: {
 		alias: {
 			"@lib": "/lib",
