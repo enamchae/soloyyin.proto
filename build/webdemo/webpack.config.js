@@ -1,11 +1,8 @@
 import path from "path";
-
-const mode = "production";
-const devtool = process.env.NODE_ENV === "development" ? "source-map" : false;
+import consts from "../webpack.config-consts.js";
 
 export default [{
-	mode,
-	devtool,
+	...consts,
 
 	entry: {
 		index: "./webdemo/js/index.js",
@@ -15,11 +12,10 @@ export default [{
 		path: path.resolve("./.webdemo-dist/js/"),
 	}
 }, {
-	mode,
-	devtool,
+	...consts,
 
 	entry: {
-		worklet: "./webdemo/js/.lib/volume-calc/Extremizer-audioworklet.js",
+		worklet: "./lib/volume-calc/Extremizer-audioworklet.js",
 	},
 	output: {
 		filename: "Extremizer-audioworklet.js",

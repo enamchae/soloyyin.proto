@@ -1,0 +1,9 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"baseUrl": "./",
+		"paths": {
+			"@lib/*": ["lib/*"]
+		}
+	}
+}

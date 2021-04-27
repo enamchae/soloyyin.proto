@@ -1,5 +1,5 @@
-import {BinarySolo} from "./.lib/Soloyyin.js";
-import ExtremaAnalyser from "./.lib/volume-calc/ExtremaAnalyser.js";
+import {BinarySolo} from "@lib/Soloyyin.js";
+import ExtremaAnalyser from "@lib/volume-calc/ExtremaAnalyser.js";
 
 // const browser = require("webextension-polyfill");
 

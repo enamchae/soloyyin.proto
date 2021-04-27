@@ -4,14 +4,12 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"copy-lib": "bash build/copy-lib.sh",
-		"autorefresh-lib": "nodemon --watch lib -x \"npm run copy-lib\"",
 		"webext-hot": "mkdir -p .webext-dist && cd .webext-dist && web-ext run",
 		"build-webdemo": "bash build/webdemo/build.sh",
-		"build-webdemo:devp": "cross-env NODE_ENV=development npm run build-webdemo",
+		"build-webdemo:dev": "cross-env NODE_ENV=development npm run build-webdemo",
 		"build-webdemo:prod": "cross-env NODE_ENV=production npm run build-webdemo",
 		"build-webext": "bash build/webext/build.sh",
-		"build-webext:devp": "cross-env NODE_ENV=development npm run build-webext",
+		"build-webext:dev": "cross-env NODE_ENV=development npm run build-webext",
 		"build-webext:prod": "cross-env NODE_ENV=production npm run build-webext"
 	},
 	"devDependencies": {

@@ -1,11 +1,8 @@
 import path from "path";
-
-const mode = "production";
-const devtool = process.env.NODE_ENV === "development" ? "source-map" : false;
+import consts from "../webpack.config-consts.js";
 
 export default [{
-	mode,
-	devtool,
+	...consts,
 
 	entry: {
 		content: "./webext/js/content.js",
@@ -15,8 +12,7 @@ export default [{
 		path: path.resolve("./.webext-dist/"),
 	}
 }, {
-	mode,
-	devtool,
+	...consts,
 
 	entry: {
 		index: "./webext/js/popup/index.js",
@@ -26,11 +22,10 @@ export default [{
 		path: path.resolve("./.webext-dist/popup/"),
 	}
 }, {
-	mode,
-	devtool,
+	...consts,
 
 	entry: {
-		worklet: "./webext/js/.lib/volume-calc/Extremizer-audioworklet.js",
+		worklet: "./lib/volume-calc/Extremizer-audioworklet.js",
 	},
 	output: {
 		filename: "Extremizer-audioworklet.js",
