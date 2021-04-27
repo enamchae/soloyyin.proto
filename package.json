@@ -4,10 +4,10 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"copy-lib": "bash _build/copy-lib.sh",
+		"copy-lib": "bash build/copy-lib.sh",
 		"autorefresh-lib": "nodemon --watch lib -x \"npm run copy-lib\"",
 		"webext-run": "cd webext && web-ext run",
-		"webext-build": "bash _build/webext/copy-lib.sh && npx webpack --config _build/webext/webpack.config.js"
+		"webext-build": "bash build/webext/copy-lib.sh && npx webpack --config build/webext/webpack.config.js"
 	},
 	"devDependencies": {
 		"nodemon": "^2.0.7",

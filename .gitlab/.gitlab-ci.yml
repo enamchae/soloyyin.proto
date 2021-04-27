@@ -1,7 +1,7 @@
 pages:
     stage: deploy
     script:
-        - bash _build/webdemo/copy-lib.sh
+        - bash build/webdemo/copy-lib.sh
         - mkdir public
         - cp -r webdemo-static/* public
     artifacts:
