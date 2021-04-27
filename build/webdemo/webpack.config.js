@@ -1,7 +1,11 @@
 import path from "path";
 
+const mode = "production";
+const devtool = process.env.NODE_ENV === "development" ? "source-map" : false;
+
 export default [{
-	mode: "production",
+	mode,
+	devtool,
 
 	entry: {
 		index: "./webdemo/js/index.js",
@@ -11,7 +15,8 @@ export default [{
 		path: path.resolve("./.webdemo-dist/js/"),
 	}
 }, {
-	mode: "production",
+	mode,
+	devtool,
 
 	entry: {
 		worklet: "./webdemo/js/.lib/volume-calc/Extremizer-audioworklet.js",

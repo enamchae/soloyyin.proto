@@ -1,7 +1,11 @@
 import path from "path";
 
+const mode = "production";
+const devtool = process.env.NODE_ENV === "development" ? "source-map" : false;
+
 export default [{
-	mode: "production",
+	mode,
+	devtool,
 
 	entry: {
 		content: "./webext/js/content.js",
@@ -11,7 +15,8 @@ export default [{
 		path: path.resolve("./.webext-dist/"),
 	}
 }, {
-	mode: "production",
+	mode,
+	devtool,
 
 	entry: {
 		index: "./webext/js/popup/index.js",
@@ -21,7 +26,8 @@ export default [{
 		path: path.resolve("./.webext-dist/popup/"),
 	}
 }, {
-	mode: "production",
+	mode,
+	devtool,
 
 	entry: {
 		worklet: "./webext/js/.lib/volume-calc/Extremizer-audioworklet.js",
