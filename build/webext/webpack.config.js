@@ -4,7 +4,7 @@ export default [{
 	mode: "production",
 
 	entry: {
-		content: "./webext/content.js",
+		content: "./webext/js/content.js",
 	},
 	output: {
 		filename: "[name].js",
@@ -14,7 +14,7 @@ export default [{
 	mode: "production",
 
 	entry: {
-		index: "./webext/popup/index.js",
+		index: "./webext/js/popup/index.js",
 	},
 	output: {
 		filename: "[name].js",
