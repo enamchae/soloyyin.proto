@@ -7,6 +7,7 @@
 		"copy-lib": "bash build/copy-lib.sh",
 		"autorefresh-lib": "nodemon --watch lib -x \"npm run copy-lib\"",
 		"webext-run": "cd webext && web-ext run",
+		"webdemo-build": "bash build/webdemo/copy-lib.sh && npx webpack --config build/webdemo/webpack.config.js",
 		"webext-build": "bash build/webext/copy-lib.sh && npx webpack --config build/webext/webpack.config.js"
 	},
 	"devDependencies": {
