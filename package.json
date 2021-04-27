@@ -2,13 +2,20 @@
 	"name": "-",
 	"version": "0.0.0",
 	"description": "",
+	"type": "module",
 	"scripts": {
 		"copy-lib": "bash _build/copy-lib.sh",
 		"autorefresh-lib": "nodemon --watch lib -x \"npm run copy-lib\"",
-		"webext-run": "cd webext && web-ext run"
+		"webext-run": "cd webext && web-ext run",
+		"webext-build": "bash _build/webext/copy-lib.sh && npx webpack --config _build/webext/webpack.config.js"
 	},
 	"devDependencies": {
 		"nodemon": "^2.0.7",
-		"web-ext": "^6.1.0"
+		"web-ext": "^6.1.0",
+		"webpack": "^5.36.0",
+		"webpack-cli": "^4.6.0"
+	},
+	"dependencies": {
+		"webextension-polyfill": "^0.8.0"
 	}
 }

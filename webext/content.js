@@ -1,3 +1,8 @@
+import {BinarySolo} from "./js/.lib/Soloyyin.js";
+import ExtremaAnalyser from "./js/.lib/volume-calc/ExtremaAnalyser.js";
+
+// const browser = require("webextension-polyfill");
+
 const userPickNewMedia = () => {
 	return new Promise(resolve => {
 		const onclick = event => {
@@ -23,6 +28,14 @@ const userPickNewMedia = () => {
 			case "pick-new-media": {
 				const media = await userPickNewMedia();
 				console.log(media);
+
+				const solo = new BinarySolo(media, {
+					lookaheadMargin: 0.25,
+					lookbehindMargin: 0.25,
+					thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+					loudSpeed: 1,
+					softSpeed: 4,
+				});
 
 				break;
 			}

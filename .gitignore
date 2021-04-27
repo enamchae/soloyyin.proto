@@ -7,3 +7,5 @@ webdemo-static/js/.lib
 webext/js/.lib
 
 # build result
+.webdemo-dist
+.webext-dist
