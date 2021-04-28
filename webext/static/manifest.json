@@ -9,6 +9,10 @@
 		"activeTab"
 	],
 
+	"web_accessible_resources": [
+		"./js/Extremizer-audioworklet.js"
+	],
+
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
