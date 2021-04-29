@@ -18,7 +18,7 @@ export default [{
 	output: {
 		filename: "[name].js",
 		path: path.resolve("./.webext-dist/"),
-	}
+	},
 }, {
 	...consts,
 	plugins,
@@ -29,7 +29,7 @@ export default [{
 	output: {
 		filename: "[name].js",
 		path: path.resolve("./.webext-dist/popup/"),
-	}
+	},
 }, {
 	...consts,
 	plugins,
@@ -40,5 +40,5 @@ export default [{
 	output: {
 		filename: "Extremizer-audioworklet.js",
 		path: path.resolve("./.webext-dist/js/"),
-	}
+	},
 }];

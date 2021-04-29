@@ -12,15 +12,6 @@
 	"web_accessible_resources": [
 		"./js/Extremizer-audioworklet.js"
 	],
-
-	"content_scripts": [
-		{
-			"matches": ["<all_urls>"],
-			"js": [
-				"./content.js"
-			]
-		}
-	],
 	"browser_action": {
 		"default_popup": "./popup/index.html",
 		"default_title": ""

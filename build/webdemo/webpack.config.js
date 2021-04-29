@@ -18,7 +18,7 @@ export default [{
 	output: {
 		filename: "[name].js",
 		path: path.resolve("./.webdemo-dist/js/"),
-	}
+	},
 }, {
 	...consts,
 	plugins,
@@ -29,5 +29,5 @@ export default [{
 	output: {
 		filename: "Extremizer-audioworklet.js",
 		path: path.resolve("./.webdemo-dist/js/"),
-	}
+	},
 }];
