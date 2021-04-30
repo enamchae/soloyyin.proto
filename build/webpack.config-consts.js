@@ -6,4 +6,8 @@ export default {
 			"@lib": "/lib",
 		},
 	},
+
+/* 	cache: {
+		type: "filesystem",
+	}, */
 };
