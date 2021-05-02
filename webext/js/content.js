@@ -1,3 +1,4 @@
+import browser from "webextension-polyfill";
 import {BinarySolo} from "@lib/Soloyyin.js";
 import ExtremaAnalyser from "@lib/volume-calc/ExtremaAnalyser.js";
 
@@ -33,6 +34,7 @@ let currentSolo = null;
 
 			case "pick-new-media":
 				return (async () => {
+					console.log("Picking new media");
 					const media = await userPickNewMedia();
 					console.log(media);
 
