@@ -22,6 +22,8 @@ const userPickNewMedia = () => {
 	});
 };
 
+let currentSolo = null;
+
 (async () => {
  	// No async listener: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#parameters
 	browser.runtime.onMessage.addListener((message, sender) => {
@@ -30,19 +32,23 @@ const userPickNewMedia = () => {
 				return Promise.resolve();
 
 			case "pick-new-media":
-				(async () => {
+				return (async () => {
 					const media = await userPickNewMedia();
 					console.log(media);
 
-	/* 				const solo = new BinarySolo(media, {
+					currentSolo = new BinarySolo(media, {
 						lookaheadMargin: 0.25,
 						lookbehindMargin: 0.25,
 						thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
 						loudSpeed: 1,
 						softSpeed: 4,
-					}); */
+					});
+
+					return currentSolo;
 				})();
-				break;
+
+			case "get-solo":
+				return Promise.resolve(currentSolo);
 				
 			default:
 				throw new TypeError();

@@ -25,6 +25,6 @@
 	await loadContentScriptIfUnloaded();
 
 	document.querySelector("#pick-new-media").addEventListener("click", async () => {
-		browser.tabs.sendMessage(tab.id, "pick-new-media");
+		console.log(await browser.tabs.sendMessage(tab.id, "pick-new-media"));
 	});
 })();
