@@ -20,25 +20,28 @@ const userPickNewMedia = () => {
 		};
 
 		addEventListener("click", onclick);
-	});
+	})
 };
 
-let currentSolo = null;
+let currentEngine = null;
 
 (async () => {
  	// No async listener: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#parameters
 	browser.runtime.onMessage.addListener((message, sender) => {
+		console.log(`New content script message: ${message}`);
+
 		switch (message) {
-			case "ping":
+			case "noop":
 				return Promise.resolve();
 
+			// TODO handle multiple clicks
 			case "pick-new-media":
 				return (async () => {
 					console.log("Picking new media");
 					const media = await userPickNewMedia();
-					console.log(media);
+					console.log(media, media.currentSrc);
 
-					currentSolo = new BinarySolo(media, {
+					currentEngine = new BinarySolo(media, {
 						lookaheadMargin: 0.25,
 						lookbehindMargin: 0.25,
 						thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
@@ -46,14 +49,21 @@ let currentSolo = null;
 						softSpeed: 4,
 					});
 
-					return currentSolo;
+					// document.body.insertAdjacentElement("afterbegin", currentEngine.lookaheadMedia);
+
+					return currentEngine;
 				})();
 
-			case "get-solo":
-				return Promise.resolve(currentSolo);
+			case "start":
+				console.log("Starting engine");
+				return (async () => {
+					await currentEngine?.start();
+				})();
 				
 			default:
 				throw new TypeError();
 		}
 	});
 })();
+
+console.log("Content script loaded");
