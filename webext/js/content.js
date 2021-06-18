@@ -1,5 +1,5 @@
 import browser from "webextension-polyfill";
-import {BinarySolo} from "@lib/Soloyyin.js";
+import {TailSolo} from "@lib/Soloyyin.js";
 import ExtremaAnalyser from "@lib/volume-calc/ExtremaAnalyser.js";
 
 // const browser = require("webextension-polyfill");
@@ -41,12 +41,26 @@ let currentEngine = null;
 					const media = await userPickNewMedia();
 					console.log(media, media.currentSrc);
 
-					currentEngine = new BinarySolo(media, {
+					const thresholdAmp = ExtremaAnalyser.ampFromDbfs(-16);
+					const loudSpeed = 1;
+					const softSpeed = 4;
+
+					currentEngine = new TailSolo(media, {
 						lookaheadMargin: 0.25,
-						lookbehindMargin: 0.25,
-						thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
-						loudSpeed: 1,
-						softSpeed: 4,
+						// lookbehindMargin: 0.25,
+						// thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+						// loudSpeed: 1,
+						// softSpeed: 4,
+
+						onIteration: async () => {
+							const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
+			
+							if (maxAmp < thresholdAmp) {
+								media.playbackRate = softSpeed;
+							} else {
+								media.playbackRate = loudSpeed;
+							}
+						},
 					});
 
 					// document.body.insertAdjacentElement("afterbegin", currentEngine.lookaheadMedia);
@@ -57,6 +71,7 @@ let currentEngine = null;
 			case "start":
 				console.log("Starting engine");
 				return (async () => {
+					// TODO freezes because can't load mediastreams
 					await currentEngine?.start();
 				})();
 				
