@@ -46,14 +46,15 @@ let currentEngine = null;
 					const softSpeed = 4;
 
 					currentEngine = new TailSolo(media, {
-						lookaheadMargin: 0.25,
-						// lookbehindMargin: 0.25,
+						lookbehindMargin: 0.25,
+						// lookaheadMargin: 0.25,
 						// thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
 						// loudSpeed: 1,
 						// softSpeed: 4,
 
 						onIteration: async () => {
 							const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
+							// console.log(maxAmp);
 			
 							if (maxAmp < thresholdAmp) {
 								media.playbackRate = softSpeed;
