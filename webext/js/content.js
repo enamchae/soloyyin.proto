@@ -24,13 +24,18 @@ const userPickNewMedia = () => {
 };
 
 let currentEngine = null;
+const engineOptions = {
+	thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+	loudSpeed: 1,
+	softSpeed: 4,
+};
 
 (async () => {
  	// No async listener: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#parameters
 	browser.runtime.onMessage.addListener((message, sender) => {
-		console.log(`New content script message: ${message}`);
+		console.log(`New content script message:`, message);
 
-		switch (message) {
+		switch (message.type) {
 			case "noop":
 				return Promise.resolve();
 
@@ -40,10 +45,6 @@ let currentEngine = null;
 					console.log("Picking new media");
 					const media = await userPickNewMedia();
 					console.log(media, media.currentSrc);
-
-					const thresholdAmp = ExtremaAnalyser.ampFromDbfs(-16);
-					const loudSpeed = 1;
-					const softSpeed = 4;
 
 					currentEngine = new TailSolo(media, {
 						lookbehindMargin: 0.25,
@@ -56,10 +57,10 @@ let currentEngine = null;
 							const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
 							// console.log(maxAmp);
 			
-							if (maxAmp < thresholdAmp) {
-								media.playbackRate = softSpeed;
+							if (maxAmp < engineOptions.thresholdAmp) {
+								media.playbackRate = engineOptions.softSpeed;
 							} else {
-								media.playbackRate = loudSpeed;
+								media.playbackRate = engineOptions.loudSpeed;
 							}
 						},
 					});
@@ -75,6 +76,13 @@ let currentEngine = null;
 					// TODO freezes because can't load mediastreams
 					await currentEngine?.start();
 				})();
+
+			case "get-options":
+				return Promise.resolve(engineOptions);
+
+			case "set-options":
+				Object.assign(engineOptions, message.options);
+				return Promise.resolve();
 				
 			default:
 				throw new TypeError();

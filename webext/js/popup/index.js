@@ -12,8 +12,11 @@ import browser from "webextension-polyfill";
 	 * @namespace
 	 */
 	const Content = {
-		message(message) {
-			return browser.tabs.sendMessage(tab.id, message);
+		message(messageType, messageOptions=null) {
+			return browser.tabs.sendMessage(tab.id, {
+				type: messageType,
+				options: messageOptions,
+			});
 		},
 
 		async isLoaded() {
@@ -28,6 +31,14 @@ import browser from "webextension-polyfill";
 
 		promptPickNewMedia() {
 			return this.message("pick-new-media");
+		},
+
+		getEngineOptions() {
+			return this.message("get-options");
+		},
+
+		setEngineOptions(optionsSource) {
+			return this.message("set-options", optionsSource);
 		},
 	};
 
@@ -55,6 +66,8 @@ import browser from "webextension-polyfill";
 
 		await Content.promptPickNewMedia();
 		console.log("New media selected");
+
+		console.log(await Content.getEngineOptions());
 
 		Content.message("start");
 	});
