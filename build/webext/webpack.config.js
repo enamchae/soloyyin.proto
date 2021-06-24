@@ -1,5 +1,7 @@
 import webpack from "webpack";
 import path from "path";
+import {VueLoaderPlugin} from "vue-loader";
+// import HtmlWebpackPlugin from "html-webpack-plugin";
 import consts from "../webpack.config-consts.js";
 
 const plugins = [
@@ -9,6 +11,32 @@ const plugins = [
 ];
 
 export default [{
+	...consts,
+	plugins: plugins.concat(new VueLoaderPlugin(), /* new HtmlWebpackPlugin({
+		template: "./webext/popup/index.html",
+	}) */),
+
+	module: {
+		rules: [{
+			test: /\.vue$/,
+			loader: "vue-loader",
+		}, {
+			test: /\.css$/,
+			use: [
+				"vue-style-loader",
+				"css-loader",
+			],
+		}],
+	},
+
+	entry: {
+		index: "./webext/popup/vue.index.js",
+	},
+	output: {
+		filename: "index.js",
+		path: path.resolve("./.webext-dist/popup/"),
+	},
+}, {
 	...consts,
 	plugins,
 
@@ -24,7 +52,7 @@ export default [{
 	plugins,
 
 	entry: {
-		index: "./webext/js/popup/index.js",
+		index: "./webext/popup/index.js",
 	},
 	output: {
 		filename: "[name].js",
