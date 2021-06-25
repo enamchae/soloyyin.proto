@@ -4,7 +4,7 @@
 
 import browser from "webextension-polyfill";
 
-(async () => {
+export default (async () => {
 	const tab = (await browser.tabs.query({active: true, currentWindow: true}))[0];
 	console.log(tab);
 
@@ -29,6 +29,16 @@ import browser from "webextension-polyfill";
 			}
 		},
 
+		async loadIfUnloaded() {
+			if (await this.isLoaded()) {
+				console.log("Content script already loaded");
+			} else {
+				console.log("Content script now loading");
+				await browser.tabs.executeScript({file: "/content.js"});
+				console.log("Content script done loading!");
+			}
+		},
+
 		promptPickNewMedia() {
 			return this.message("pick-new-media");
 		},
@@ -49,26 +59,7 @@ import browser from "webextension-polyfill";
 		location.reload();
 	});
 	
-	const loadContentScriptIfUnloaded = async () => {
-		if (await Content.isLoaded()) {
-			console.log("Content script already loaded");
-		} else {
-			console.log("Content script now loading");
-			await browser.tabs.executeScript({file: "/content.js"});
-			console.log("Content script done loading!");
-		}
-	};
-	
-	await loadContentScriptIfUnloaded();
+	await Content.loadIfUnloaded();
 
-	document.querySelector("#pick-new-media").addEventListener("click", async () => {
-		console.log("Picking new media");
-
-		await Content.promptPickNewMedia();
-		console.log("New media selected");
-
-		console.log(await Content.getEngineOptions());
-
-		Content.message("start");
-	});
+	return {tab, Content};
 })();
