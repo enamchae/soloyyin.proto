@@ -52,17 +52,6 @@ export default [{
 	plugins,
 
 	entry: {
-		index: "./webext/popup/index.js",
-	},
-	output: {
-		filename: "[name].js",
-		path: path.resolve("./.webext-dist/popup/"),
-	},
-}, {
-	...consts,
-	plugins,
-
-	entry: {
 		worklet: "./lib/volume-calc/Extremizer-audioworklet.js",
 	},
 	output: {

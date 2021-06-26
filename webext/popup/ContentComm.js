@@ -61,5 +61,5 @@ export default (async () => {
 	
 	await Content.loadIfUnloaded();
 
-	return {tab, Content};
+	return Content;
 })();

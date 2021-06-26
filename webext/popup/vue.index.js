@@ -1,9 +1,9 @@
 /** @file (Webpack) */
 
 import Vue from "vue";
-import Main from "./Main.vue";
+import Root from "./Root.vue";
 
 const app = new Vue({
 	el: "main",
-	render: createElement => createElement(Main),
+	render: createElement => createElement(Root),
 });

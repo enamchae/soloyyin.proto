@@ -1,17 +1,19 @@
 <template>
 	<main :data-disabled="!contentScriptLoaded">
 		<button id="pick-new-media" @click="pickNewMedia">Select media</button>
+
+		<OptionsControls />
 	</main>
 </template>
 
 <script>
-import contentScriptPromise from "./index.js";
+import contentScriptPromise from "./ContentComm.js";
+import OptionsControls from "./components/OptionsControls.vue";
 
-let tab;
 let Content;
 
 export default {
-	name: "Main",
+	name: "root",
 
 	data: () => ({
 		contentScriptLoaded: false,
@@ -31,10 +33,14 @@ export default {
 	},
 	
 	async created() {
-		({tab, Content} = await contentScriptPromise);
+		Content = await contentScriptPromise;
 		this.contentScriptLoaded = true;
 	},
-};
+
+	components: {
+		OptionsControls,
+	},
+};	
 </script>
 
 <style>
