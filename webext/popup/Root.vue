@@ -28,7 +28,7 @@ export default {
 
 			console.log(await Content.getEngineOptions());
 
-			Content.message("start");
+			Content.startEngine();
 		},
 	},
 	

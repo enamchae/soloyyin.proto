@@ -37,6 +37,12 @@
 			</tr>
 		</table>
 
+		<table>
+			<tr>
+				<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
+				<td>{{dbfsFromAmp(engineData.lastMaxAmp)}}</td>
+			</tr>
+		</table>
 	</options-controls>
 </template>
 
@@ -55,6 +61,7 @@ export default {
 		engineOptionsLoaded: false,
 
 		engineOptions: null,
+		engineData: null,
 	}),
 
 	methods: {
@@ -71,6 +78,16 @@ export default {
 		this.engineOptions = await Content.getEngineOptions();
 
 		this.engineOptionsLoaded = true;
+	},
+
+	async mounted() {
+		await contentScriptPromise;
+
+		const updateDataTable = async () => {
+			this.engineData = await Content.getEngineData();
+			requestAnimationFrame(updateDataTable);
+		};
+		requestAnimationFrame(updateDataTable);
 	},
 
 	components: {

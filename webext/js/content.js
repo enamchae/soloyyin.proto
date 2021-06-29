@@ -30,10 +30,14 @@ const engineOptions = {
 	softSpeed: 4,
 };
 
+const engineData = {
+	lastMaxAmp: NaN,
+};
+
 (async () => {
  	// No async listener: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#parameters
 	browser.runtime.onMessage.addListener((message, sender) => {
-		// console.log(`New content script message:`, message);
+		// console.log(`New content script message (${message.type}):`, message);
 
 		switch (message.type) {
 			case "noop":
@@ -55,7 +59,7 @@ const engineOptions = {
 
 						onIteration: async () => {
 							const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
-							// console.log(maxAmp);
+							engineData.lastMaxAmp = maxAmp;
 			
 							if (maxAmp < engineOptions.thresholdAmp) {
 								media.playbackRate = engineOptions.softSpeed;
@@ -83,6 +87,9 @@ const engineOptions = {
 			case "set-options":
 				Object.assign(engineOptions, message.options);
 				return Promise.resolve();
+
+			case "get-data":
+				return Promise.resolve(engineData);
 				
 			default:
 				throw new TypeError();

@@ -43,12 +43,20 @@ export default (async () => {
 			return this.message("pick-new-media");
 		},
 
+		startEngine() {
+			return this.message("start");
+		},
+
 		getEngineOptions() {
 			return this.message("get-options");
 		},
 
 		setEngineOptions(optionsSource) {
 			return this.message("set-options", optionsSource);
+		},
+
+		getEngineData() {
+			return this.message("get-data");
 		},
 	};
 
