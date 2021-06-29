@@ -5,7 +5,11 @@
 				<th>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
 				<td>
 					<input type="range" min="0" max="1" step="any"/>
-					<input type="text" :value="dbfsFromAmp(engineOptions.thresholdAmp)" @input="setThresholdAmp" />
+					<ValidatorInput
+							v-model="engineOptions.thresholdAmp"
+							:convertIn="dbfsFromAmp"
+							:convertOut="ampFromDbfs"
+							:validate="value => 0 <= value && value <= 1" />
 
 					{{thresholdDbfs}}
 				</td>
@@ -14,14 +18,18 @@
 				<th>Loud playback speed</th>
 				<td>
 					<input type="range" min="-2" max="2" step="any" />
-					<input type="text" v-model.number="engineOptions.loudSpeed" />
+					<ValidatorInput
+							v-model="engineOptions.loudSpeed"
+							:validate="value => 1/4 <= value && value <= 4" />
 				</td>
 			</tr>
 			<tr>
 				<th>Quiet playback speed</th>
 				<td>
 					<input type="range" min="-2" max="2" step="any" />
-					<ValidatorInput :validate="value => 1/4 <= value && value <= 4" v-model="engineOptions.softSpeed" />
+					<ValidatorInput
+							v-model="engineOptions.softSpeed"
+							:validate="value => 1/4 <= value && value <= 4" />
 				</td>
 			</tr>
 		</table>
@@ -46,19 +54,14 @@ export default {
 	}),
 
 	methods: {
-		log: event => console.log(event, event.currentTarget),
-
 		async setOptions() {
 			await Content.setEngineOptions(this.engineOptions);
 
 			console.log(await Content.getEngineOptions());
 		},
 
+		ampFromDbfs: ExtremaAnalyser.ampFromDbfs,
 		dbfsFromAmp: ExtremaAnalyser.dbfsFromAmp,
-
-		setThresholdAmp(event) {
-			this.engineOptions.thresholdAmp = ExtremaAnalyser.ampFromDbfs(Number(event.currentTarget.value));
-		},
 	},
 
 	computed: {

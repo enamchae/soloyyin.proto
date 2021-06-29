@@ -3,15 +3,26 @@
 </template>
 
 <script>
-const TRUEY = () => true;
+const identity = value => value;
+const acceptAlways = () => true;
 
 export default {
 	name: "validatorinput",
 
 	props: {
+		convertIn: {
+			type: Function,
+			default: identity,
+		},
+
+		convertOut: {
+			type: Function,
+			default: identity,
+		},
+
 		validate: {
 			type: Function,
-			default: TRUEY,
+			default: acceptAlways,
 		},
 
 		value: {
@@ -42,7 +53,7 @@ export default {
 
 	methods: {
 		validateInput(event) {
-			const proposedValue = Number(this.$el.value);
+			const proposedValue = this.convertOut(Number(this.$el.value));
 
 			this.unsafeValue = proposedValue;
 			if (this.validate(proposedValue)) {
@@ -55,7 +66,7 @@ export default {
 
 		resetInput() {
 			this.unsafeValue = this.value;
-			this.$el.value = this.value;
+			this.$el.value = this.convertIn(this.value);
 		},
 	},
 
@@ -66,7 +77,7 @@ export default {
 	},
 
 	mounted() {
-		this.$el.value = this.value;
+		this.$el.value = this.convertIn(this.value);
 	},
 };
 </script>
