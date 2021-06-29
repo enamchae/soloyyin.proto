@@ -33,7 +33,7 @@ const engineOptions = {
 (async () => {
  	// No async listener: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#parameters
 	browser.runtime.onMessage.addListener((message, sender) => {
-		console.log(`New content script message:`, message);
+		// console.log(`New content script message:`, message);
 
 		switch (message.type) {
 			case "noop":
