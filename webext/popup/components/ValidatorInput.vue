@@ -1,5 +1,5 @@
 <template>
-	<input type="text" @input.stop="validateInput" @change.stop="resetInput" :class="{invalid: proposedValueIsInvalid}" />
+	<input type="text" @input="validateInput" @change.stop="resetInput" :class="{invalid: proposedValueIsInvalid}" />
 </template>
 
 <script>
@@ -14,7 +14,7 @@ export default {
 			default: TRUEY,
 		},
 
-		initialValue: {
+		value: {
 			type: Number,
 			default: 0,
 		},
@@ -22,8 +22,7 @@ export default {
 
 	data() {
 		return {
-			value: this.initialValue,
-			unsafeValue: this.initialValue,
+			unsafeValue: this.value,
 		};
 	},
 
@@ -42,18 +41,27 @@ export default {
 	},
 
 	methods: {
-		validateInput() {
+		validateInput(event) {
 			const proposedValue = Number(this.$el.value);
 
 			this.unsafeValue = proposedValue;
 			if (this.validate(proposedValue)) {
 				this.value = proposedValue;
+				this.$emit("input", this.value);
+			} else {
+				event.stopPropagation();
 			}
 		},
 
 		resetInput() {
 			this.unsafeValue = this.value;
 			this.$el.value = this.value;
+		},
+	},
+
+	watch: {
+		initialValue(newValue, oldValue) {
+			this.value = newValue;
 		},
 	},
 

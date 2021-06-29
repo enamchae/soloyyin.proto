@@ -21,12 +21,11 @@
 				<th>Quiet playback speed</th>
 				<td>
 					<input type="range" min="-2" max="2" step="any" />
-					<input type="text" v-model.number="engineOptions.softSpeed" />
+					<ValidatorInput :validate="value => 1/4 <= value && value <= 4" v-model="engineOptions.softSpeed" />
 				</td>
 			</tr>
 		</table>
 
-		<ValidatorInput :validate="value => value < 20" :initialValue="-5" />
 	</options-controls>
 </template>
 
@@ -47,6 +46,8 @@ export default {
 	}),
 
 	methods: {
+		log: event => console.log(event, event.currentTarget),
+
 		async setOptions() {
 			await Content.setEngineOptions(this.engineOptions);
 
