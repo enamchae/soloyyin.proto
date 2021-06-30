@@ -18,12 +18,6 @@ export default {
 		},
 	},
 
-	computed: {
-		isFocused() {
-			return document.activeElement === this.$el;
-		},
-	},
-
 	methods: {
 		updateInputValue() {
 			this.$el.value = this.convertIn(this.value);

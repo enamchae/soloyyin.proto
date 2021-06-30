@@ -7,7 +7,7 @@
 		"build-webdemo": "bash build/webdemo/build.sh",
 		"build-webdemo:dev": "cross-env NODE_ENV=development npm run build-webdemo",
 		"build-webdemo:prod": "cross-env NODE_ENV=production npm run build-webdemo",
-		"build-webext": "bash build/webext/build.sh",
+		"build-webext": "node ./build/webext/index.js",
 		"build-webext:dev": "cross-env NODE_ENV=development npm run build-webext",
 		"build-webext:prod": "cross-env NODE_ENV=production npm run build-webext",
 		"webdemo-hot": "nodemon --watch lib --watch webdemo -x \"npm run build-webdemo:dev\"",
@@ -17,6 +17,7 @@
 	},
 	"devDependencies": {
 		"cross-env": "^7.0.3",
+		"fs-extra": "^9.1.0",
 		"nodemon": "^2.0.7",
 		"npm-run-all": "^4.1.5",
 		"vue-loader": "^15.9.7",
