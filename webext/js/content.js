@@ -23,7 +23,10 @@ const userPickNewMedia = () => {
 	})
 };
 
+const NOOP = () => {};
+
 let currentEngine = null;
+let stopCurrentEngine = NOOP;
 const engineOptions = {
 	thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
 	loudSpeed: 1,
@@ -31,6 +34,8 @@ const engineOptions = {
 };
 
 const engineData = {
+	mediaSelected: false,
+	active: false,
 	lastMaxAmp: NaN,
 };
 
@@ -67,7 +72,13 @@ const engineData = {
 								media.playbackRate = engineOptions.loudSpeed;
 							}
 						},
+
+						teardown: () => {
+							media.playbackRate = 1;
+						},
 					});
+
+					engineData.mediaSelected = true;
 
 					// document.body.insertAdjacentElement("afterbegin", currentEngine.lookaheadMedia);
 
@@ -77,9 +88,15 @@ const engineData = {
 			case "start":
 				console.log("Starting engine");
 				return (async () => {
-					// TODO freezes because can't load mediastreams
-					await currentEngine?.start();
+					stopCurrentEngine = await currentEngine?.start();
+					engineData.active = true;
 				})();
+
+			case "stop":
+				console.log("Stopping engine");
+				stopCurrentEngine();
+				engineData.active = false;
+				return Promise.resolve();
 
 			case "get-options":
 				return Promise.resolve(engineOptions);

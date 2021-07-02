@@ -1,5 +1,7 @@
 <template>
 	<options-controls @input="setOptions">
+		<button id="pick-new-media" @click="pickNewMedia">Select media</button>
+
 		<table>
 			<tr>
 				<th>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
@@ -37,6 +39,8 @@
 			</tr>
 		</table>
 
+		<button @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
+
 		<table>
 			<tr>
 				<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
@@ -49,8 +53,8 @@
 <script>
 import contentScriptPromise from "../ContentComm.js";
 import ExtremaAnalyser from "@lib/volume-calc/ExtremaAnalyser.js";
-import Entry from "./Entry.vue";
-import Slider from "./Slider.vue";
+import Entry from "./input/Entry.vue";
+import Slider from "./input/Slider.vue";
 
 let Content;
 
@@ -59,14 +63,39 @@ export default {
 	
 	data: () => ({
 		engineOptionsLoaded: false,
+		engineMediaSelected: false,
+		engineActive: false,
+		engineToggling: false,
 
 		engineOptions: null,
 		engineData: null,
 	}),
 
 	methods: {
+		async pickNewMedia() {
+			console.log("Picking new media");
+
+			await Content.promptPickNewMedia();
+			console.log("New media selected");
+
+			this.engineMediaSelected = true;
+		},
+
 		async setOptions() {
 			await Content.setEngineOptions(this.engineOptions);
+		},
+
+		async toggleEngine() {
+			this.engineToggling = true;
+
+			if (!this.engineActive) {
+				await Content.startEngine();
+			} else {
+				await Content.stopEngine();
+			}
+
+			this.engineToggling = false;
+			this.engineActive = !this.engineActive;
 		},
 
 		ampFromDbfs: ExtremaAnalyser.ampFromDbfs,
@@ -75,9 +104,18 @@ export default {
 
 	async created() {
 		Content = await contentScriptPromise;
-		this.engineOptions = await Content.getEngineOptions();
 
-		this.engineOptionsLoaded = true;
+		await Promise.all([
+			Content.getEngineOptions().then(engineOptions => {
+				this.engineOptions = engineOptions;
+				this.engineOptionsLoaded = true;
+			}),
+			Content.getEngineData().then(engineData => {
+				this.engineData = engineData;
+				this.engineMediaSelected = engineData.mediaSelected;
+				this.engineActive = engineData.active;
+			}),
+		]);
 	},
 
 	async mounted() {
@@ -96,3 +134,9 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+options-controls {
+	display: block;
+}
+</style>

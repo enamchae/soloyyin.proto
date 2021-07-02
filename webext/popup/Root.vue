@@ -1,7 +1,5 @@
 <template>
 	<main :data-disabled="!contentScriptLoaded">
-		<button id="pick-new-media" @click="pickNewMedia">Select media</button>
-
 		<OptionsControls />
 	</main>
 </template>
@@ -18,19 +16,6 @@ export default {
 	data: () => ({
 		contentScriptLoaded: false,
 	}),
-
-	methods: {
-		async pickNewMedia() {
-			console.log("Picking new media");
-
-			await Content.promptPickNewMedia();
-			console.log("New media selected");
-
-			console.log(await Content.getEngineOptions());
-
-			Content.startEngine();
-		},
-	},
 	
 	async created() {
 		Content = await contentScriptPromise;

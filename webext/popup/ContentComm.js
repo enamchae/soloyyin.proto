@@ -47,6 +47,10 @@ export default (async () => {
 			return this.message("start");
 		},
 
+		stopEngine() {
+			return this.message("stop");
+		},
+
 		getEngineOptions() {
 			return this.message("get-options");
 		},
