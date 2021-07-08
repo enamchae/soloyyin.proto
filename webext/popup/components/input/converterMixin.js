@@ -19,12 +19,12 @@ export default {
 	},
 
 	methods: {
-		updateInputValue() {
+		updateDisplayValue() {
 			this.$el.value = this.convertIn(this.value);
 		},
 	},
 
 	mounted() {
-		this.updateInputValue();
+		this.updateDisplayValue();
 	},
 };

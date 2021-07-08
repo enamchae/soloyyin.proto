@@ -39,7 +39,7 @@ export default {
 		},
 
 		onChange() {
-			this.updateInputValue();
+			this.updateDisplayValue();
 			this.proposedValueIsValid = true;
 		},
 
@@ -55,7 +55,7 @@ export default {
 	watch: {
 		value() {
 			if (this.isFocused) return;
-			this.updateInputValue();
+			this.updateDisplayValue();
 		},
 	},
 };

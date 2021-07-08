@@ -1,5 +1,5 @@
 <template>
-	<input type="range" step="any" :min="minValue" :max="maxValue" @input="handleInput" @change="updateInputValue">
+	<input type="range" step="any" :min="minValue" :max="maxValue" @input="handleInput" @change="updateDisplayValue">
 </template>
 
 <script>
@@ -30,7 +30,7 @@ export default {
 	
 	watch: {
 		value() {
-			this.updateInputValue();
+			this.updateDisplayValue();
 		},
 	},
 };

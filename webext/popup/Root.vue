@@ -29,6 +29,10 @@ export default {
 </script>
 
 <style>
+* {
+	box-sizing: border-box;
+}
+
 :disabled,
 [data-disabled] {
 	pointer-events: none;

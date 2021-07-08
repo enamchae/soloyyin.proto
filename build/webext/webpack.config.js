@@ -30,7 +30,7 @@ export default [{
 	},
 
 	entry: {
-		index: "./webext/popup/vue.index.js",
+		index: "./webext/popup/index.js",
 	},
 	output: {
 		filename: "index.js",

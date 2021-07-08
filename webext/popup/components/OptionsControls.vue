@@ -1,45 +1,44 @@
 <template>
 	<options-controls @input="setOptions">
-		<button id="pick-new-media" @click="pickNewMedia">Select media</button>
+		<div class="grid">
+			<button class="pick-new-media" @click="pickNewMedia">Select media</button>
+			<button class="recorder-toggle" @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
 
-		<table>
-			<tr>
-				<th>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
-				<td>
-					<Slider v-model="engineOptions.thresholdAmp" />
-					<Entry v-model="engineOptions.thresholdAmp"
-							:convertIn="dbfsFromAmp"
-							:convertOut="ampFromDbfs"
-							:validate="value => 0 <= value && value <= 1" />
-				</td>
-			</tr>
-			<tr>
-				<th>Loud playback speed</th>
-				<td>
-					<Slider v-model="engineOptions.loudSpeed"
-							:minValue="-2"
-							:maxValue="2"
-							:convertIn="trueValue => Math.log2(trueValue)"
-							:convertOut="displayValue => 2 ** displayValue" />
-					<Entry v-model="engineOptions.loudSpeed"
-							:validate="value => 1/4 <= value && value <= 4" />
-				</td>
-			</tr>
-			<tr>
-				<th>Quiet playback speed</th>
-				<td>
-					<Slider v-model="engineOptions.softSpeed"
-							:minValue="-2"
-							:maxValue="2"
-							:convertIn="trueValue => Math.log2(trueValue)"
-							:convertOut="displayValue => 2 ** displayValue" />
-					<Entry v-model="engineOptions.softSpeed"
-							:validate="value => 1/4 <= value && value <= 4" />
-				</td>
-			</tr>
-		</table>
+			<div class="loud-speed">
+				<label>Loud playback speed</label>
+				<Slider v-model="engineOptions.loudSpeed"
+						:minValue="-2"
+						:maxValue="2"
+						:convertIn="trueValue => Math.log2(trueValue)"
+						:convertOut="displayValue => 2 ** displayValue" />
+				<Entry v-model="engineOptions.loudSpeed"
+						:validate="value => 1/4 <= value && value <= 4" />
+			</div>
 
-		<button @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
+			<div class="soft-speed">
+				<label>Quiet playback speed</label>
+				<Slider v-model="engineOptions.softSpeed"
+						:minValue="-2"
+						:maxValue="2"
+						:convertIn="trueValue => Math.log2(trueValue)"
+						:convertOut="displayValue => 2 ** displayValue" />
+				<Entry v-model="engineOptions.softSpeed"
+						:validate="value => 1/4 <= value && value <= 4" />
+			</div>
+
+			<ThresholdSlider />
+
+			<div class="threshold-amp">
+				<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
+				<Slider v-model="engineOptions.thresholdAmp"
+						:convertIn="value => Math.cbrt(value)"
+						:convertOut="value => value ** 3" />
+				<Entry v-model="engineOptions.thresholdAmp"
+						:convertIn="dbfsFromAmp"
+						:convertOut="ampFromDbfs"
+						:validate="value => 0 <= value && value <= 1" />
+			</div>
+		</div>
 
 		<table>
 			<tr>
@@ -55,6 +54,7 @@ import contentScriptPromise from "../ContentComm.js";
 import ExtremaAnalyser from "@lib/volume-calc/ExtremaAnalyser.js";
 import Entry from "./input/Entry.vue";
 import Slider from "./input/Slider.vue";
+import ThresholdSlider from "./input/ThresholdSlider.vue";
 
 let Content;
 
@@ -131,12 +131,43 @@ export default {
 	components: {
 		Entry,
 		Slider,
+		ThresholdSlider,
 	},
 };
 </script>
 
 <style scoped>
-options-controls {
+options-controls,
+label {
 	display: block;
+}
+
+.grid {
+	min-height: 8em;
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-rows: repeat(2, auto);
+	grid-template-columns: repeat(4, auto);
+	gap: 1em;
+}
+
+:where(.grid > *) {
+	width: 100%;
+	height: 100%;
+}
+
+.grid > threshold-slider,
+.grid > .threshold-amp {
+	grid-area: span 2 / auto;
+}
+
+.grid > div {
+	display: flex;
+	flex-flow: column;
+	justify-content: center;
+}
+
+threshold-slider {
+	width: 3em;
 }
 </style>
