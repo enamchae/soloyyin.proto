@@ -38,7 +38,7 @@ export default {
 		},
 
 		updateDisplayValue() {
-			this.$el.value = this.convertIn(this.value);
+			this.$el.style.setProperty("--value", this.convertIn(this.value));
 		},
 	},
 	
@@ -55,6 +55,8 @@ threshold-slider {
 	display: grid;
 
 	background: #99b;
+	
+	--value: 0;
 }
 
 threshold-slider > slider-domains {
@@ -76,7 +78,9 @@ slider-handles > * {
 }
 
 handle- {
+	bottom: calc(clamp(0, var(--value), 1) * 100%);
 	border: 4px solid #fff;
+
 	box-shadow: 0 4px 4px #0003;
 }
 </style>

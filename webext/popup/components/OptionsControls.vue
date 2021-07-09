@@ -26,7 +26,9 @@
 						:validate="value => 1/4 <= value && value <= 4" />
 			</div>
 
-			<ThresholdSlider />
+			<ThresholdSlider v-model="engineOptions.thresholdAmp"
+					:convertIn="value => Math.cbrt(value)"
+					:convertOut="value => value ** 3" />
 
 			<div class="threshold-amp">
 				<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
