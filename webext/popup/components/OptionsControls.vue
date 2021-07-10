@@ -1,51 +1,58 @@
 <template>
-	<options-controls @input="setOptions">
-		<div class="grid">
-			<button class="pick-new-media" @click="pickNewMedia">Select media</button>
-			<button class="recorder-toggle" @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
+	<section>
+		<zone-indicators>
+			<zone- class="loud"></zone->
+			<zone- class="soft"></zone->
+		</zone-indicators>
 
-			<div class="loud-speed">
-				<label>Loud playback speed</label>
-				<Slider v-model="engineOptions.loudSpeed"
-						:minValue="-2"
-						:maxValue="2"
-						:convertIn="trueValue => Math.log2(trueValue)"
-						:convertOut="displayValue => 2 ** displayValue" />
-				<Entry v-model="engineOptions.loudSpeed"
-						:validate="value => 1/4 <= value && value <= 4" />
+		<options-controls @input="setOptions">
+			<div class="grid">
+				<button class="pick-new-media" @click="pickNewMedia">Select media</button>
+				<button class="recorder-toggle" @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
+
+				<option-set class="loud-speed">
+					<label>Loud playback speed</label>
+					<Slider v-model="engineOptions.loudSpeed"
+							:minValue="-2"
+							:maxValue="2"
+							:convertIn="trueValue => Math.log2(trueValue)"
+							:convertOut="displayValue => 2 ** displayValue" />
+					<Entry v-model="engineOptions.loudSpeed"
+							:validate="value => 1/4 <= value && value <= 4" />
+				</option-set>
+
+				<option-set class="soft-speed">
+					<label>Quiet playback speed</label>
+					<Slider v-model="engineOptions.softSpeed"
+							:minValue="-2"
+							:maxValue="2"
+							:convertIn="trueValue => Math.log2(trueValue)"
+							:convertOut="displayValue => 2 ** displayValue" />
+					<Entry v-model="engineOptions.softSpeed"
+							:validate="value => 1/4 <= value && value <= 4" />
+				</option-set>
+
+				<ThresholdSlider v-model="engineOptions.thresholdAmp"
+						:convertIn="value => Math.cbrt(value)"
+						:convertOut="value => value ** 3" />
+
+				<option-set class="threshold-amp">
+					<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
+					<Entry v-model="engineOptions.thresholdAmp"
+							:convertIn="dbfsFromAmp"
+							:convertOut="ampFromDbfs"
+							:validate="value => 0 <= value && value <= 1" />
+				</option-set>
 			</div>
 
-			<div class="soft-speed">
-				<label>Quiet playback speed</label>
-				<Slider v-model="engineOptions.softSpeed"
-						:minValue="-2"
-						:maxValue="2"
-						:convertIn="trueValue => Math.log2(trueValue)"
-						:convertOut="displayValue => 2 ** displayValue" />
-				<Entry v-model="engineOptions.softSpeed"
-						:validate="value => 1/4 <= value && value <= 4" />
-			</div>
-
-			<ThresholdSlider v-model="engineOptions.thresholdAmp"
-					:convertIn="value => Math.cbrt(value)"
-					:convertOut="value => value ** 3" />
-
-			<div class="threshold-amp">
-				<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
-				<Entry v-model="engineOptions.thresholdAmp"
-						:convertIn="dbfsFromAmp"
-						:convertOut="ampFromDbfs"
-						:validate="value => 0 <= value && value <= 1" />
-			</div>
-		</div>
-
-		<table>
-			<tr>
-				<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
-				<td>{{dbfsFromAmp(engineData.lastMaxAmp)}}</td>
-			</tr>
-		</table>
-	</options-controls>
+			<table>
+				<tr>
+					<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
+					<td>{{dbfsFromAmp(engineData.lastMaxAmp)}}</td>
+				</tr>
+			</table>
+		</options-controls>
+	</section>
 </template>
 
 <script>
@@ -136,6 +143,18 @@ export default {
 </script>
 
 <style scoped>
+section {
+	display: grid;
+}
+
+section > * {
+	grid-area: 1 / 1;
+}
+
+options-controls {
+	padding: .5em;
+}
+
 options-controls,
 label {
 	display: block;
@@ -145,8 +164,7 @@ label {
 	min-height: 8em;
 	display: grid;
 	grid-auto-flow: column;
-	grid-template-rows: repeat(2, auto);
-	grid-template-columns: repeat(4, auto);
+	grid-template: repeat(2, auto) / repeat(4, auto);
 	gap: 1em;
 }
 
@@ -155,12 +173,17 @@ label {
 	height: 100%;
 }
 
+option-set {
+	padding: .25em;
+	border: 1px solid;
+}
+
 .grid > threshold-slider,
-.grid > .threshold-amp {
+.grid > option-set.threshold-amp {
 	grid-area: span 2 / auto;
 }
 
-.grid > div {
+.grid > option-set {
 	display: flex;
 	flex-flow: column;
 	justify-content: center;
@@ -168,5 +191,26 @@ label {
 
 threshold-slider {
 	width: 3em;
+}
+
+zone-indicators {
+	display: grid;
+	grid-template-rows: repeat(2, 1fr);
+}
+
+.loud-speed {
+	color: var(--loud-color);
+}
+
+.soft-speed {
+	color: var(--soft-color);
+}
+
+zone-.loud {
+	background: var(--loud-background);
+}
+
+zone-.soft {
+	background: var(--soft-background);
 }
 </style>

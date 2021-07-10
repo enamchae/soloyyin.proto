@@ -86,14 +86,30 @@ export default {
 threshold-slider {
 	display: grid;
 
-	background: #99b;
+	background: #000;
 	
 	--value: 0;
 }
 
 threshold-slider > slider-domains {
 	grid-area: 1 / 1;
-	display: flex;
+}
+
+slider-domains {
+	display: grid;
+	grid-template-rows: calc((1 - var(--value)) * 100%) 1fr;
+}
+
+slider-domains > * {
+	display: block;
+}
+
+domain-.loud {
+	background: var(--loud-mid);
+}
+
+domain-.soft {
+	background: var(--soft-mid);
 }
 
 threshold-slider > slider-handles {
