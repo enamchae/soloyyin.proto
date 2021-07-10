@@ -6,7 +6,7 @@
 		</slider-domains>
 
 		<slider-handles>
-			<handle-></handle->
+			<handle- @pointerdown="startDrag" :style="{'--handle-height': `${this.handleHeight}px`}"></handle->
 		</slider-handles>
 	<!-- <input type="range" step="any" :min="minValue" :max="maxValue" @input="handleInput" @change="updateDisplayValue"> -->
 	</threshold-slider>
@@ -32,6 +32,15 @@ export default {
 		},
 	},
 
+	data() {
+		return {
+			handleActive: false,
+			handleDragOffset: 0,
+
+			handleHeight: 24,
+		};
+	},
+
 	methods: {
 		handleInput() {
 			this.$emit("input", this.convertOut(Number(this.$el.value)));
@@ -40,12 +49,35 @@ export default {
 		updateDisplayValue() {
 			this.$el.style.setProperty("--value", this.convertIn(this.value));
 		},
+
+		startDrag(event) {
+			this.handleActive = true;
+			this.handleDragOffset = event.pageY - this.$el.querySelector("handle-").offsetTop;
+		},
+
+		continueDrag(event) {
+			if (!this.handleActive) return;
+			
+			const newPos = Math.max(0, Math.min(1, 1 - (event.pageY - this.$el.clientTop - this.handleDragOffset + this.handleHeight / 2) / this.$el.clientHeight));
+			this.$emit("input", this.convertOut(newPos));
+
+			getSelection().removeAllRanges();
+		},
+
+		endDrag() {
+			this.handleActive = false;
+		},
 	},
 	
 	watch: {
 		value() {
 			this.updateDisplayValue();
 		},
+	},
+
+	mounted() {
+		addEventListener("pointermove", event => this.continueDrag(event));
+		addEventListener("pointerup", event => this.endDrag(event));
 	},
 };
 </script>
@@ -78,7 +110,18 @@ slider-handles > * {
 }
 
 handle- {
-	bottom: calc(clamp(0, var(--value), 1) * 100%);
+	display: flex;
+	align-items: center;
+	height: var(--handle-height);
+
+	bottom: calc(clamp(0, var(--value), 1) * 100% - var(--handle-height) / 2);
+	cursor: ns-resize;
+}
+
+handle-::after {
+	content: " ";
+
+	width: 100%;
 	border: 4px solid #fff;
 
 	box-shadow: 0 4px 4px #0003;

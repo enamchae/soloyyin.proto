@@ -32,9 +32,6 @@
 
 			<div class="threshold-amp">
 				<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
-				<Slider v-model="engineOptions.thresholdAmp"
-						:convertIn="value => Math.cbrt(value)"
-						:convertOut="value => value ** 3" />
 				<Entry v-model="engineOptions.thresholdAmp"
 						:convertIn="dbfsFromAmp"
 						:convertOut="ampFromDbfs"
