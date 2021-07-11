@@ -35,6 +35,7 @@ const engineOptions = {
 
 const engineData = {
 	mediaSelected: false,
+	selectingMedia: false,
 	active: false,
 	lastMaxAmp: NaN,
 	lastIsLoud: false,
@@ -51,6 +52,9 @@ const engineData = {
 
 			// TODO handle multiple clicks
 			case "pick-new-media":
+				if (engineData.selectingMedia) return Promise.resolve();
+
+				engineData.selectingMedia = true;
 				return (async () => {
 					console.log("Picking new media");
 					const media = await userPickNewMedia();
@@ -81,6 +85,7 @@ const engineData = {
 					});
 
 					engineData.mediaSelected = true;
+					engineData.selectingMedia = false;
 
 					// document.body.insertAdjacentElement("afterbegin", currentEngine.lookaheadMedia);
 

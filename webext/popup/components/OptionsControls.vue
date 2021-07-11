@@ -7,10 +7,10 @@
 
 		<options-controls @input="setOptions">
 			<div class="grid">
-				<button class="pick-new-media" @click="pickNewMedia">Select media</button>
+				<button class="pick-new-media" @click="pickNewMedia" :disabled="selectingMedia" v-html="selectingMedia ? 'Click on media…<br />🡿' : 'Select media'"></button>
 				<button class="recorder-toggle" @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
 
-				<option-set class="loud-speed">
+				<option-set class="loud">
 					<label>Loud playback speed</label>
 					<Slider v-model="engineOptions.loudSpeed"
 							:minValue="-2"
@@ -21,7 +21,7 @@
 							:validate="value => 1/4 <= value && value <= 4" />
 				</option-set>
 
-				<option-set class="soft-speed">
+				<option-set class="soft">
 					<label>Quiet playback speed</label>
 					<Slider v-model="engineOptions.softSpeed"
 							:minValue="-2"
@@ -69,22 +69,27 @@ export default {
 	
 	data: () => ({
 		engineOptionsLoaded: false,
+		
+		selectingMedia: false,
 		engineMediaSelected: false,
 		engineActive: false,
 		engineToggling: false,
 
-		engineOptions: null,
-		engineData: null,
+		engineOptions: {},
+		engineData: {},
 	}),
 
 	methods: {
 		async pickNewMedia() {
 			console.log("Picking new media");
 
+			this.selectingMedia = true;
+
 			await Content.promptPickNewMedia();
 			console.log("New media selected");
 
 			this.engineMediaSelected = true;
+			this.selectingMedia = false;
 		},
 
 		async setOptions() {
@@ -119,6 +124,7 @@ export default {
 			Content.getEngineData().then(engineData => {
 				this.engineData = engineData;
 				this.engineMediaSelected = engineData.mediaSelected;
+				this.selectingMedia = engineData.selectingMedia;
 				this.engineActive = engineData.active;
 			}),
 		]);
@@ -151,6 +157,27 @@ section > * {
 	grid-area: 1 / 1;
 }
 
+zone-indicators {
+	display: grid;
+	grid-template-rows: repeat(2, 1fr);
+}
+
+zone-.loud {
+	background: var(--loud-abyss);
+}
+
+zone-.loud.in-zone {
+	background: var(--loud-background);
+}
+
+zone-.soft {
+	background: var(--soft-abyss);
+}
+
+zone-.soft.in-zone {
+	background: var(--soft-background);
+}
+
 options-controls {
 	padding: .5em;
 }
@@ -173,10 +200,6 @@ label {
 	height: 100%;
 }
 
-option-set {
-	padding: .5em;
-}
-
 .grid > * {
 	border: 1px solid var(--color);
 	box-shadow: 2px 2px var(--color);
@@ -197,36 +220,19 @@ option-set {
 	justify-content: center;
 }
 
-threshold-slider {
-	width: 3em;
+option-set {
+	padding: .5em;
 }
 
-zone-indicators {
-	display: grid;
-	grid-template-rows: repeat(2, 1fr);
-}
-
-.loud-speed {
+option-set.loud {
 	color: var(--loud-color);
 }
 
-.soft-speed {
+option-set.soft {
 	color: var(--soft-color);
 }
 
-zone-.loud {
-	background: var(--loud-abyss);
-}
-
-zone-.loud.in-zone {
-	background: var(--loud-background);
-}
-
-zone-.soft {
-	background: var(--soft-abyss);
-}
-
-zone-.soft.in-zone {
-	background: var(--soft-background);
+threshold-slider {
+	width: 3em;
 }
 </style>

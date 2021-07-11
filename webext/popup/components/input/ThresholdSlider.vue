@@ -8,6 +8,8 @@
 		<slider-handles>
 			<handle- @pointerdown="startDrag" :style="{'--handle-height': `${this.handleHeight}px`}"></handle->
 		</slider-handles>
+
+		<canvas class="amp-history"></canvas>
 	<!-- <input type="range" step="any" :min="minValue" :max="maxValue" @input="handleInput" @change="updateDisplayValue"> -->
 	</threshold-slider>
 </template>
@@ -82,13 +84,12 @@ export default {
 <style scoped>
 threshold-slider {
 	display: grid;
-
-	background: #000;
+	grid-template: auto / 100%; /* hm… didn't need this before */
 	
 	--value: 0;
 }
 
-threshold-slider > slider-domains {
+threshold-slider > * {
 	grid-area: 1 / 1;
 }
 
@@ -107,10 +108,6 @@ domain-.loud {
 
 domain-.soft {
 	background: var(--soft-mid);
-}
-
-threshold-slider > slider-handles {
-	grid-area: 1 / 1;
 }
 
 slider-handles {
