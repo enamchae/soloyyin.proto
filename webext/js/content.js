@@ -37,6 +37,7 @@ const engineData = {
 	mediaSelected: false,
 	active: false,
 	lastMaxAmp: NaN,
+	lastIsLoud: false,
 };
 
 (async () => {
@@ -65,6 +66,7 @@ const engineData = {
 						onIteration: async () => {
 							const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
 							engineData.lastMaxAmp = maxAmp;
+							engineData.lastIsLoud = maxAmp >= engineOptions.thresholdAmp;
 			
 							if (maxAmp < engineOptions.thresholdAmp) {
 								media.playbackRate = engineOptions.softSpeed;

@@ -41,16 +41,20 @@ export default {
 }
 
 :root {
+	--loud-abyss: hsl(180, 51%, 10%);
 	--loud-background: hsl(180, 43%, 23%);
 	--loud-mid: hsl(180, 48%, 37%);
 	--loud-color: hsl(180, 70%, 80%);
 
+	--soft-abyss: hsl(0, 51%, 10%);
 	--soft-background: hsl(0, 43%, 23%);
 	--soft-mid: hsl(0, 48%, 37%);
 	--soft-color: hsl(0, 70%, 80%);
 
 	--neutral-background: hsl(0, 0%, 23%);
 	--neutral-color: #fff;
+
+	--color: currentcolor;
 }
 
 body {
@@ -98,6 +102,7 @@ button:hover {
 }
 
 button:active {
+	--color: var(--neutral-color);
 	border-color: var(--neutral-color);
 	background: var(--neutral-color);
 	color: var(--neutral-background);

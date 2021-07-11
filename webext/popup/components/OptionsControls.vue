@@ -1,8 +1,8 @@
 <template>
 	<section>
 		<zone-indicators>
-			<zone- class="loud"></zone->
-			<zone- class="soft"></zone->
+			<zone- :class="['loud', {'in-zone': engineActive && engineData.lastIsLoud }]"></zone->
+			<zone- :class="['soft', {'in-zone': engineActive && !engineData.lastIsLoud }]"></zone->
 		</zone-indicators>
 
 		<options-controls @input="setOptions">
@@ -174,8 +174,16 @@ label {
 }
 
 option-set {
-	padding: .25em;
-	border: 1px solid;
+	padding: .5em;
+}
+
+.grid > * {
+	border: 1px solid var(--color);
+	box-shadow: 2px 2px var(--color);
+}
+
+.grid > button {
+	border-width: 2px;
 }
 
 .grid > threshold-slider,
@@ -207,10 +215,18 @@ zone-indicators {
 }
 
 zone-.loud {
+	background: var(--loud-abyss);
+}
+
+zone-.loud.in-zone {
 	background: var(--loud-background);
 }
 
 zone-.soft {
+	background: var(--soft-abyss);
+}
+
+zone-.soft.in-zone {
 	background: var(--soft-background);
 }
 </style>

@@ -42,10 +42,6 @@ export default {
 	},
 
 	methods: {
-		handleInput() {
-			this.$emit("input", this.convertOut(Number(this.$el.value)));
-		},
-
 		updateDisplayValue() {
 			this.$el.style.setProperty("--value", this.convertIn(this.value));
 		},
@@ -60,6 +56,7 @@ export default {
 			
 			const newPos = Math.max(0, Math.min(1, 1 - (event.pageY - this.$el.clientTop - this.handleDragOffset + this.handleHeight / 2) / this.$el.clientHeight));
 			this.$emit("input", this.convertOut(newPos));
+			this.$el.dispatchEvent(new Event("input", {bubbles: true}));
 
 			getSelection().removeAllRanges();
 		},
