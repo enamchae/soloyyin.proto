@@ -44,14 +44,17 @@ export default {
 			type: Object,
 			default: {},
 		},
+
+		handleHeight: {
+			type: Number,
+			default: 24,
+		},
 	},
 
 	data() {
 		return {
 			handleActive: false,
-			handleDragOffset: 0,
-
-			handleHeight: 24,
+			currentHandleDragOffset: 0,
 		};
 	},
 
@@ -62,13 +65,13 @@ export default {
 
 		startDrag(event) {
 			this.handleActive = true;
-			this.handleDragOffset = event.pageY - this.$el.querySelector("handle-").offsetTop;
+			this.currentHandleDragOffset = event.pageY - this.$el.querySelector("handle-").offsetTop;
 		},
 
 		continueDrag(event) {
 			if (!this.handleActive) return;
 			
-			const newPos = Math.max(0, Math.min(1, 1 - (event.pageY - this.$el.clientTop - this.handleDragOffset + this.handleHeight / 2) / this.$el.clientHeight));
+			const newPos = Math.max(0, Math.min(1, 1 - (event.pageY - this.$el.clientTop - this.currentHandleDragOffset + this.handleHeight / 2) / this.$el.clientHeight));
 			this.$emit("input", this.convertOut(newPos));
 			this.$el.dispatchEvent(new Event("input", {bubbles: true}));
 
@@ -95,12 +98,20 @@ export default {
 		canvas.height = this.$el.clientHeight;
 		const context = canvas.getContext("2d");
 		context.fillStyle = "#0000007f";
-		context.scale(canvas.width, -canvas.height);
-		context.translate(0, -1);
+		context.scale(-1, -canvas.height);
+		context.translate(-canvas.width, -1);
 
+		// TODO isn't really a graph of audio in the video
+
+		let then = Date.now();
 		const updateDiagram = now => {
-			context.clearRect(0, 0, canvas.width, canvas.height);
+			const imageData = context.getImageData(1, 0, canvas.width - 1, canvas.height);
+			context.putImageData(imageData, 0, 0);
+
+			context.clearRect(0, 0, 1, canvas.height);
 			context.fillRect(0, 0, 1, this.convertIn(this.engineData?.lastMaxAmp ?? 0));
+
+			then = now;
 			requestAnimationFrame(updateDiagram);
 		};
 		requestAnimationFrame(updateDiagram);
