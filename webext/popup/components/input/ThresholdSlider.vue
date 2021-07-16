@@ -5,6 +5,8 @@
 			<domain- class="soft"></domain->
 		</slider-domains>
 
+		<canvas></canvas>
+
 		<slider-handles>
 			<handle- @pointerdown="startDrag" :style="{'--handle-height': `${this.handleHeight}px`}"></handle->
 		</slider-handles>
@@ -31,6 +33,16 @@ export default {
 		maxValue: {
 			type: Number,
 			default: 1,
+		},
+
+		engineOptions: {
+			type: Object,
+			default: {},
+		},
+
+		engineData: {
+			type: Object,
+			default: {},
 		},
 	},
 
@@ -77,6 +89,21 @@ export default {
 	mounted() {
 		addEventListener("pointermove", event => this.continueDrag(event));
 		addEventListener("pointerup", event => this.endDrag(event));
+
+		const canvas = this.$el.querySelector("canvas");
+		canvas.width = this.$el.clientWidth;
+		canvas.height = this.$el.clientHeight;
+		const context = canvas.getContext("2d");
+		context.fillStyle = "#0000007f";
+		context.scale(canvas.width, -canvas.height);
+		context.translate(0, -1);
+
+		const updateDiagram = now => {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+			context.fillRect(0, 0, 1, this.convertIn(this.engineData?.lastMaxAmp ?? 0));
+			requestAnimationFrame(updateDiagram);
+		};
+		requestAnimationFrame(updateDiagram);
 	},
 };
 </script>

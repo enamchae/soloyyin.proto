@@ -13,28 +13,30 @@
 				<option-set class="loud">
 					<label>Loud playback speed</label>
 					<Slider v-model="engineOptions.loudSpeed"
-							:minValue="-2"
-							:maxValue="2"
+							:minValue="-3"
+							:maxValue="3"
 							:convertIn="trueValue => Math.log2(trueValue)"
 							:convertOut="displayValue => 2 ** displayValue" />
 					<Entry v-model="engineOptions.loudSpeed"
-							:validate="value => 1/4 <= value && value <= 4" />
+							:validate="value => 1/8 <= value && value <= 8" />
 				</option-set>
 
 				<option-set class="soft">
 					<label>Quiet playback speed</label>
 					<Slider v-model="engineOptions.softSpeed"
-							:minValue="-2"
-							:maxValue="2"
+							:minValue="-3"
+							:maxValue="3"
 							:convertIn="trueValue => Math.log2(trueValue)"
 							:convertOut="displayValue => 2 ** displayValue" />
 					<Entry v-model="engineOptions.softSpeed"
-							:validate="value => 1/4 <= value && value <= 4" />
+							:validate="value => 1/8 <= value && value <= 8" />
 				</option-set>
 
 				<ThresholdSlider v-model="engineOptions.thresholdAmp"
 						:convertIn="value => Math.cbrt(value)"
-						:convertOut="value => value ** 3" />
+						:convertOut="value => value ** 3"
+						:engineOptions="engineOptions"
+						:engineData="engineData" />
 
 				<option-set class="threshold-amp">
 					<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
@@ -133,11 +135,11 @@ export default {
 	async mounted() {
 		await contentScriptPromise;
 
-		const updateDataTable = async () => {
+		const updateEngineData = async () => {
 			this.engineData = await Content.getEngineData();
-			requestAnimationFrame(updateDataTable);
+			requestAnimationFrame(updateEngineData);
 		};
-		requestAnimationFrame(updateDataTable);
+		requestAnimationFrame(updateEngineData);
 	},
 
 	components: {
