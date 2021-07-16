@@ -25,6 +25,30 @@ const userPickNewMedia = () => {
 
 const NOOP = () => {};
 
+const createEngine = media => new TailSolo(media, {
+	lookbehindMargin: 0.25,
+	// lookaheadMargin: 0.25,
+	// thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+	// loudSpeed: 1,
+	// softSpeed: 4,
+
+	onIteration: async () => {
+		const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
+		engineData.lastMaxAmp = maxAmp;
+		engineData.lastIsLoud = maxAmp >= engineOptions.thresholdAmp;
+
+		if (maxAmp < engineOptions.thresholdAmp) {
+			media.playbackRate = engineOptions.softSpeed;
+		} else {
+			media.playbackRate = engineOptions.loudSpeed;
+		}
+	},
+
+	teardown: () => {
+		media.playbackRate = 1;
+	},
+});
+
 let currentEngine = null;
 let stopCurrentEngine = NOOP;
 const engineOptions = {
@@ -60,29 +84,11 @@ const engineData = {
 					const media = await userPickNewMedia();
 					console.log(media, media.currentSrc);
 
-					currentEngine = new TailSolo(media, {
-						lookbehindMargin: 0.25,
-						// lookaheadMargin: 0.25,
-						// thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
-						// loudSpeed: 1,
-						// softSpeed: 4,
-
-						onIteration: async () => {
-							const maxAmp = await currentEngine.extremaAnalyser.maxAmpFromExtremizer();
-							engineData.lastMaxAmp = maxAmp;
-							engineData.lastIsLoud = maxAmp >= engineOptions.thresholdAmp;
-			
-							if (maxAmp < engineOptions.thresholdAmp) {
-								media.playbackRate = engineOptions.softSpeed;
-							} else {
-								media.playbackRate = engineOptions.loudSpeed;
-							}
-						},
-
-						teardown: () => {
-							media.playbackRate = 1;
-						},
-					});
+					if (!currentEngine) {
+						currentEngine = createEngine(media);
+					} else {
+						currentEngine.setMedia(media);
+					}
 
 					engineData.mediaSelected = true;
 					engineData.selectingMedia = false;
