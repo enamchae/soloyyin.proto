@@ -52,6 +52,17 @@ export default [{
 	plugins,
 
 	entry: {
+		background: "./webext/js/background.js",
+	},
+	output: {
+		filename: "[name].js",
+		path: path.resolve("./.webext-dist/"),
+	},
+}, {
+	...consts,
+	plugins,
+
+	entry: {
 		worklet: "./lib/volume-calc/Extremizer-audioworklet.js",
 	},
 	output: {

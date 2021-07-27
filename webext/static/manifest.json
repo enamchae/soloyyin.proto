@@ -12,10 +12,12 @@
 	"web_accessible_resources": [
 		"/js/Extremizer-audioworklet.js"
 	],
-	"browser_action": {
-		"default_popup": "./popup/index.html",
-		"default_title": ""
+
+	"background": {
+		"scripts": ["./background.js"]
 	},
+
+	"browser_action": {},
 	
 	"content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }
