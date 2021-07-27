@@ -1,46 +1,45 @@
 <template>
 	<section>
 		<zone-indicators>
-			<zone- :class="['loud', {'in-zone': engineActive && engineData.lastIsLoud }]"></zone->
-			<zone- :class="['soft', {'in-zone': engineActive && !engineData.lastIsLoud }]"></zone->
+			<zone- :class="['loud', {'in-zone': engine.data.active && engine.data.lastIsLoud }]"></zone->
+			<zone- :class="['soft', {'in-zone': engine.data.active && !engine.data.lastIsLoud }]"></zone->
 		</zone-indicators>
 
-		<options-controls @input="setOptions">
+		<options-controls>
 			<div class="grid">
-				<button class="pick-new-media" @click="pickNewMedia" :disabled="selectingMedia" v-html="selectingMedia ? 'Click on media…<br />🡿' : 'Select media'"></button>
-				<button class="recorder-toggle" @click="toggleEngine" :disabled="!engineMediaSelected || engineToggling">{{engineActive ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
+				<button class="pick-new-media" @click="pickMedia" :disabled="selectingMedia" v-html="selectingMedia ? 'Click on media…<br />🡿' : 'Select media'"></button>
+				<button class="recorder-toggle" @click="toggleEngine" :disabled="!engine.data.mediaSelected || engineToggling">{{engine.data.active ? "❚❚ Stop tracking" : "▶ Start tracking"}}</button>
 
 				<option-set class="loud">
 					<label>Loud playback speed</label>
-					<Slider v-model="engineOptions.loudSpeed"
+					<Slider v-model="engine.options.loudSpeed"
 							:minValue="-3"
 							:maxValue="3"
 							:convertIn="trueValue => Math.log2(trueValue)"
 							:convertOut="displayValue => 2 ** displayValue" />
-					<Entry v-model="engineOptions.loudSpeed"
+					<Entry v-model="engine.options.loudSpeed"
 							:validate="value => 1/8 <= value && value <= 8" />
 				</option-set>
 
 				<option-set class="soft">
 					<label>Quiet playback speed</label>
-					<Slider v-model="engineOptions.softSpeed"
+					<Slider v-model="engine.options.softSpeed"
 							:minValue="-3"
 							:maxValue="3"
 							:convertIn="trueValue => Math.log2(trueValue)"
 							:convertOut="displayValue => 2 ** displayValue" />
-					<Entry v-model="engineOptions.softSpeed"
+					<Entry v-model="engine.options.softSpeed"
 							:validate="value => 1/8 <= value && value <= 8" />
 				</option-set>
 
-				<ThresholdSlider v-model="engineOptions.thresholdAmp"
+				<ThresholdSlider v-model="engine.options.thresholdAmp"
 						:convertIn="value => Math.cbrt(value)"
 						:convertOut="value => value ** 3"
-						:engineOptions="engineOptions"
-						:engineData="engineData" />
+						:engine="engine" />
 
 				<option-set class="threshold-amp">
 					<label>Loudness threshold (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</label>
-					<Entry v-model="engineOptions.thresholdAmp"
+					<Entry v-model="engine.options.thresholdAmp"
 							:convertIn="dbfsFromAmp"
 							:convertOut="ampFromDbfs"
 							:validate="value => 0 <= value && value <= 1" />
@@ -50,7 +49,7 @@
 			<table>
 				<tr>
 					<th>Greatest captured loudness (<abbr title="decibels, relative to maximum amplitude">dBFS</abbr>)</th>
-					<td>{{dbfsFromAmp(engineData.lastMaxAmp)}}</td>
+					<td>{{dbfsFromAmp(engine.data.lastMaxAmp)}}</td>
 				</tr>
 			</table>
 		</options-controls>
@@ -58,88 +57,64 @@
 </template>
 
 <script>
-import contentScriptPromise from "../contentComm.js";
+import EngineManager from "../engine.js";
 import ExtremaAnalyser from "@lib/volume-calc/ExtremaAnalyser.js";
 import Entry from "./input/Entry.vue";
 import Slider from "./input/Slider.vue";
 import ThresholdSlider from "./input/ThresholdSlider.vue";
 
-let Content;
-
 export default {
 	name: "optionscontrols",
 	
 	data: () => ({
-		engineOptionsLoaded: false,
-		
-		selectingMedia: false,
-		engineMediaSelected: false,
-		engineActive: false,
-		engineToggling: false,
+		engine: new EngineManager(),
 
-		engineOptions: {},
-		engineData: {},
+		selectingMedia: false,
+		engineToggling: false,
 	}),
 
 	methods: {
-		async pickNewMedia() {
-			console.log("Picking new media");
+		promptUserPickMedia() {
+			return new Promise(resolve => {
+				const onpointerdown = event => {
+					const elements = document.elementsFromPoint(event.pageX, event.pageY);
 
-			this.selectingMedia = true;
+					for (const element of elements) {
+						if (!(element instanceof HTMLMediaElement)) continue;
 
-			await Content.promptPickNewMedia();
-			console.log("New media selected");
+						removeEventListener("pointerdown", onpointerdown);
 
-			this.engineMediaSelected = true;
-			this.selectingMedia = false;
+						resolve(element);
+						break;
+					}
+				};
+
+				addEventListener("pointerdown", onpointerdown);
+			})
 		},
 
-		async setOptions() {
-			await Content.setEngineOptions(this.engineOptions);
+		async pickMedia() {
+			if (this.selectingMedia) throw new Error();
+
+			this.selectingMedia = true;
+			console.log("Picking new media");
+			const media = await this.promptUserPickMedia();
+			console.log(media);
+			this.selectingMedia = false;
+
+			this.engine.setMedia(media);
 		},
 
 		async toggleEngine() {
+			if (this.engineToggling) throw new Error();
+
 			this.engineToggling = true;
-
-			if (!this.engineActive) {
-				await Content.startEngine();
-			} else {
-				await Content.stopEngine();
-			}
-
+			await this.engine.toggle();
 			this.engineToggling = false;
-			this.engineActive = !this.engineActive;
 		},
 
 		ampFromDbfs: ExtremaAnalyser.ampFromDbfs,
 		dbfsFromAmp: ExtremaAnalyser.dbfsFromAmp,
-	},
-
-	async created() {
-		Content = await contentScriptPromise;
-
-		await Promise.all([
-			Content.getEngineOptions().then(engineOptions => {
-				this.engineOptions = engineOptions;
-				this.engineOptionsLoaded = true;
-			}),
-			Content.getEngineData().then(engineData => {
-				this.engineData = engineData;
-				this.engineMediaSelected = engineData.mediaSelected;
-				this.selectingMedia = engineData.selectingMedia;
-				this.engineActive = engineData.active;
-			}),
-		]);
-	},
-
-	async mounted() {
-		await contentScriptPromise;
-
-		const updateEngineData = async () => {
-			this.engineData = await Content.getEngineData();
-			requestAnimationFrame(updateEngineData);
-		};
-		requestAnimationFrame(updateEngineData);
 	},
 
 	components: {

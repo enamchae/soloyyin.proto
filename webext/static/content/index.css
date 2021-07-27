@@ -32,6 +32,7 @@ main {
 
 	color: var(--neutral-color);
 	font-family: Zilla Slab;
+	font-size: 12px;
 	background: #222;
 }
 

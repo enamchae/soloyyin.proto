@@ -1,6 +1,5 @@
 /** @file (Webpack) */
 
-import browser from "webextension-polyfill";
 import Vue from "vue";
 import Root from "./Root.vue";
 
@@ -10,6 +9,11 @@ const mountTarget = document.createElement("main");
 
 mountShadow.append(mountTarget);
 document.documentElement.append(mountContainer);
+
+mountContainer.style.cssText =
+		`position: fixed;
+		top: 1em;
+		right: 1em;`;
 
 Vue.config.ignoredElements = [/.*/]; // Vue to not warn about custom elements
 
