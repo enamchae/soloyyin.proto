@@ -5,5 +5,5 @@ import webpackConfig from "./webpack.config.js";
 
 fse.emptyDirSync(path.resolve("./.webext-dist/"));
 
-fse.copy(path.resolve("./webext/static/"), path.resolve("./.webext-dist/"));
+fse.copySync(path.resolve("./webext/static/"), path.resolve("./.webext-dist/"));
 webpack(webpackConfig, (error, stats) => {});

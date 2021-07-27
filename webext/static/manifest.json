@@ -10,7 +10,8 @@
 	],
 
 	"web_accessible_resources": [
-		"/js/Extremizer-audioworklet.js"
+		"/js/Extremizer-audioworklet.js",
+		"/content/index.css"
 	],
 
 	"background": {

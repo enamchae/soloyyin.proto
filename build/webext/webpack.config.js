@@ -12,6 +12,17 @@ const plugins = [
 
 export default [{
 	...consts,
+	plugins,
+
+	entry: {
+		background: "./webext/js/background.js",
+	},
+	output: {
+		path: path.resolve("./.webext-dist/"),
+		filename: "[name].js",
+	},
+}, {
+	...consts,
 	plugins: plugins.concat(new VueLoaderPlugin(), /* new HtmlWebpackPlugin({
 		template: "./webext/popup/index.html",
 	}) */),
@@ -30,43 +41,10 @@ export default [{
 	},
 
 	entry: {
-		index: "./webext/popup/index.js",
-	},
-	output: {
-		path: path.resolve("./.webext-dist/popup/"),
-		filename: "[name].js",
-	},
-}, {
-	...consts,
-	plugins,
-
-	entry: {
-		background: "./webext/js/background.js",
-	},
-	output: {
-		path: path.resolve("./.webext-dist/"),
-		filename: "[name].js",
-	},
-}, {
-	...consts,
-	plugins,
-
-	entry: {
 		index: "./webext/js/content/index.js",
 	},
 	output: {
 		path: path.resolve("./.webext-dist/content/"),
-		filename: "[name].js",
-	},
-}, {
-	...consts,
-	plugins,
-
-	entry: {
-		index: "./webext/js/content/ui/index.js",
-	},
-	output: {
-		path: path.resolve("./.webext-dist/content/ui/"),
 		filename: "[name].js",
 	},
 }, {

@@ -1,3 +1,5 @@
+/** @file (Webpack) */
+
 import browser from "webextension-polyfill";
 
 browser.browserAction.onClicked.addListener(async tab => {
