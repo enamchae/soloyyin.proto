@@ -49,6 +49,70 @@ const createEngine = media => new TailSolo(media, {
 	},
 });
 
+class EngineManager {
+	engine = null;
+	options;
+	data;
+
+	stop = NOOP;
+
+	constructor() {
+		this.options = {
+			thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+			loudSpeed: 1,
+			softSpeed: 4,
+		};
+
+		this.data = {
+			mediaSelected: false,
+			selectingMedia: false,
+			active: false,
+			lastMaxAmp: NaN,
+			lastIsLoud: false,
+		};
+	}
+
+	setMedia(media) {
+		if (!this.engine) {
+			this.engine = new TailSolo(media, {
+				lookbehindMargin: 0.25,
+				// lookaheadMargin: 0.25,
+				// thresholdAmp: ExtremaAnalyser.ampFromDbfs(-16),
+				// loudSpeed: 1,
+				// softSpeed: 4,
+			
+				onIteration: async () => {
+					const maxAmp = await this.engine.extremaAnalyser.maxAmpFromExtremizer();
+					this.data.lastMaxAmp = maxAmp;
+					this.data.lastIsLoud = maxAmp >= this.options.thresholdAmp;
+			
+					if (maxAmp < engineOptions.thresholdAmp) {
+						media.playbackRate = this.options.softSpeed;
+					} else {
+						media.playbackRate = this.options.loudSpeed;
+					}
+				},
+			
+				teardown: () => {
+					media.playbackRate = 1;
+				},
+			});
+
+		} else {
+			this.engine.setMedia(media);
+		}
+	}
+
+	async start() {
+		this.stop = await this.engine.start();
+		this.data.active = true;
+	}
+}
+
+const engines = [
+
+];
+
 let currentEngine = null;
 let stopCurrentEngine = NOOP;
 const engineOptions = {

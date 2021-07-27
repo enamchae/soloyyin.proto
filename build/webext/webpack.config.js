@@ -33,19 +33,8 @@ export default [{
 		index: "./webext/popup/index.js",
 	},
 	output: {
-		filename: "index.js",
 		path: path.resolve("./.webext-dist/popup/"),
-	},
-}, {
-	...consts,
-	plugins,
-
-	entry: {
-		content: "./webext/js/content.js",
-	},
-	output: {
 		filename: "[name].js",
-		path: path.resolve("./.webext-dist/"),
 	},
 }, {
 	...consts,
@@ -55,8 +44,30 @@ export default [{
 		background: "./webext/js/background.js",
 	},
 	output: {
-		filename: "[name].js",
 		path: path.resolve("./.webext-dist/"),
+		filename: "[name].js",
+	},
+}, {
+	...consts,
+	plugins,
+
+	entry: {
+		index: "./webext/js/content/index.js",
+	},
+	output: {
+		path: path.resolve("./.webext-dist/content/"),
+		filename: "[name].js",
+	},
+}, {
+	...consts,
+	plugins,
+
+	entry: {
+		index: "./webext/js/content/ui/index.js",
+	},
+	output: {
+		path: path.resolve("./.webext-dist/content/ui/"),
+		filename: "[name].js",
 	},
 }, {
 	...consts,
@@ -66,7 +77,7 @@ export default [{
 		worklet: "./lib/volume-calc/Extremizer-audioworklet.js",
 	},
 	output: {
-		filename: "Extremizer-audioworklet.js",
 		path: path.resolve("./.webext-dist/js/"),
+		filename: "Extremizer-audioworklet.js",
 	},
 }];
